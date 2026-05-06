@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block title %}Отчетность | Malinka{% endblock %}
+
+{% block body %}
+<section class="reports-page stack gap-4">
+    <header class="page-toolbar reports-hero">
+        <div>
+            <p class="small-label mb-1">Отчетность</p>
+            <h1 class="page-title mb-2">Доходы по мастерам</h1>
+            <p class="page-subtitle mb-0">
+                Отчет по завершенным визитам с детализацией по мастерам, услугам и дням.
+            </p>
+        </div>
+
+        <div class="reports-hero__meta">
+            <div class="toolbar-chip">
+                <span>Период</span>
+                <strong>{{ report_period_label }}</strong>
+            </div>
+            <div class="toolbar-chip">
+                <span>Мастер</span>
+                <strong>{{ selected_master.full_name if selected_master else "Все мастера" }}</strong>
+            </div>
+            <div class="toolbar-chip">
+                <span>Услуга</span>
+                <strong>{{ selected_service.name if selected_service else "Все услуги" }}</strong>
+            </div>
+        </div>
+    </header>
+
+    <form method="get" action="/reports" class="panel-card report-filters">
+        <div class="report-filters__grid">
+            <label class="report-field">
+                <span class="form-label">Дата с</span>
+                <input class="form-control" type="date" name="date_from" value="{{ report_date_from.isoformat() }}">
+            </label>
+            <label class="report-field">
+                <span class="form-label">Дата по</span>
+                <input class="form-control" type="date" name="date_to" value="{{ report_date_to.isoformat() }}">
+            </label>
+            <label class="report-field">
+                <span class="form-label">Мастер</span>
+                <select class="form-select" name="master_id">
+                    <option value="">Все мастера</option>
+                    {% for master in visible_masters %}
+                    <option value="{{ master.id }}" {% if selected_master and selected_master.id == master.id %}selected{% endif %}>
+                        {{ master.full_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="report-field">
+                <span class="form-label">Услуга</span>
+                <select class="form-select" name="service_id">
+                    <option value="">Все услуги</option>
+                    {% for service in services %}
+                    <option value="{{ service.id }}" {% if selected_service and selected_service.id == service.id %}selected{% endif %}>
+                        {{ service.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </label>
+        </div>
+
+        <div class="report-filters__actions">
+            <button class="btn btn-primary" type="submit">Обновить отчет</button>
+            <a class="btn btn-outline-light" href="/reports">Сбросить</a>
+        </div>
+    </form>
+
+    <section class="reports-stats-grid">
+        <article class="stat-card report-stat-card report-stat-card--accent">
+            <div class="small-label">Общая выручка</div>
+            <div class="stat-card__value">{{ format_won(report_total_revenue) }}</div>
+            <div class="text-secondary small">Сумма по завершенным визитам за выбранный период</div>
+        </article>
+        <article class="stat-card report-stat-card">
+            <div class="small-label">Завершенные визиты</div>
+            <div class="stat-card__value">{{ report_completed_count }}</div>
+            <div class="text-secondary small">Количество закрытых записей в отчете</div>
+        </article>
+        <article class="stat-card report-stat-card">
+            <div class="small-label">Средний чек</div>
+            <div class="stat-card__value">{{ format_won(report_average_ticket) }}</div>
+            <div class="text-secondary small">Средний доход на один завершенный визит</div>
+        </article>
+        <article class="stat-card report-stat-card">
+            <div class="small-label">Активные мастера</div>
+            <div class="stat-card__value">{{ report_active_masters_count }}</div>
+            <div class="text-secondary small">Мастеров с доходом в этом интервале</div>
+        </article>
+        <article class="stat-card report-stat-card">
+            <div class="small-label">Среднее в день</div>
+            <div class="stat-card__value">{{ format_won(report_average_daily_revenue) }}</div>
+            <div class="text-secondary small">Средняя выручка за {{ report_period_days }} дн.</div>
+        </article>
+        <article class="stat-card report-stat-card">
+            <div class="small-label">Лучший день</div>
+            <div class="stat-card__value">{{ format_won(report_best_day.revenue if report_best_day else 0) }}</div>
+            <div class="text-secondary small">
+                {{ report_best_day.full_label if report_best_day else "Нет данных за период" }}
+            </div>
+        </article>
+    </section>
+
+    {% if report_missing_prices_count %}
+    <article class="panel-card report-warning">
+        <div>
+            <div class="small-label mb-1">Внимание</div>
+            <div class="fw-semibold">В {{ report_missing_prices_count }} завершенных визитах не хватает цен услуг.</div>
+            <div class="text-secondary small">
+                Выручка показана только по тем услугам, где у мастеров уже настроены цены.
+            </div>
+        </div>
+        <a class="btn btn-outline-light" href="/team">Проверить цены мастеров</a>
+    </article>
+    {% endif %}
+
+    <section class="reports-grid reports-grid--hero">
+        <article class="panel-card report-panel">
+            <div class="report-panel__head">
+                <div>
+                    <p class="small-label mb-1">Диаграмма</p>
+                    <h2 class="section-title mb-0">Выручка по дням</h2>
+                </div>
+                <div class="text-secondary small">Отслеживайте пики дохода внутри выбранного периода</div>
+            </div>
+
+            {% if report_completed_count %}
+            <div class="report-bars-shell">
+                <div class="report-bars" style="grid-template-columns: repeat({{ daily_chart|length }}, minmax(58px, 1fr));">
+                    {% for point in daily_chart %}
+                    <div class="report-bars__item">
+                        <div class="report-bars__value">{{ format_won(point.revenue) }}</div>
+                        <div class="report-bars__track">
+                            <span
+                                class="report-bars__fill"
+                                style="height: {{ 8 if point.revenue and point.height_percent < 8 else point.height_percent }}%;"
+                                title="{{ point.full_label }}"
+                            ></span>
+                        </div>
+                        <div class="report-bars__label">{{ point.label }}</div>
+                        <div class="report-bars__hint">{{ point.appointments }} виз.</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <article class="planner-empty report-empty">
+                <h3 class="h5 mb-2">Нет завершенных визитов</h3>
+                <p class="text-secondary mb-0">Измените даты или снимите фильтры, чтобы увидеть динамику доходов.</p>
+            </article>
+            {% endif %}
+        </article>
+
+        <article class="panel-card report-panel">
+            <div class="report-panel__head">
+                <div>
+                    <p class="small-label mb-1">Срез</p>
+                    <h2 class="section-title mb-0">Распределение по услугам</h2>
+                </div>
+                <div class="text-secondary small">Какие услуги дают основной доход</div>
+            </div>
+
+            {% if service_rows %}
+            <div class="report-donut-layout">
+                <div class="report-donut" style="--report-ring-gradient: {{ service_chart_gradient }};">
+                    <div class="report-donut__center">
+                        <strong>{{ format_won(report_total_revenue) }}</strong>
+                        <span>{{ selected_service.name if selected_service else "Сумма за период" }}</span>
+                    </div>
+                </div>
+
+                <div class="report-legend">
+                    {% for row in service_rows %}
+                    <div class="report-legend__row">
+                        <div class="report-legend__meta">
+                            <span class="report-legend__dot" style="background: {{ row.color }};"></span>
+                            <div>
+                                <div class="fw-semibold">{{ row.icon }} {{ row.name }}</div>
+                                <div class="text-secondary small">{{ row.appointments }} услуг в чеках</div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-semibold">{{ format_won(row.revenue) }}</div>
+                            <div class="text-secondary small">{{ row.share_percent }}%</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <article class="planner-empty report-empty">
+                <h3 class="h5 mb-2">Нет данных по услугам</h3>
+                <p class="text-secondary mb-0">После завершенных визитов распределение по услугам появится автоматически.</p>
+            </article>
+            {% endif %}
+        </article>
+    </section>
+
+    <section class="reports-grid reports-grid--details">
+        <article class="panel-card report-panel">
+            <div class="report-panel__head">
+                <div>
+                    <p class="small-label mb-1">Рейтинг</p>
+                    <h2 class="section-title mb-0">Мастера по выручке</h2>
+                </div>
+                <div class="text-secondary small">Сравнение вклада каждого мастера</div>
+            </div>
+
+            <div class="report-rank-list">
+                {% for row in master_rows %}
+                <div class="report-rank-row">
+                    <div class="report-rank-row__head">
+                        <div>
+                            <div class="fw-semibold">{{ row.name }}</div>
+                            <div class="text-secondary small">
+                                {{ row.appointments }} виз.
+                                {% if row.top_service_label != "—" %}
+                                • Топ услуга: {{ row.top_service_label }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-semibold">{{ format_won(row.revenue) }}</div>
+                            <div class="text-secondary small">{{ row.share_percent }}%</div>
+                        </div>
+                    </div>
+                    <div class="report-progress">
+                        <span style="width: {{ row.width_percent }}%;"></span>
+                    </div>
+                    {% if row.missing_prices_count %}
+                    <div class="report-rank-row__note">Без цены: {{ row.missing_prices_count }} виз.</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel-card report-panel">
+            <div class="report-panel__head">
+                <div>
+                    <p class="small-label mb-1">Рейтинг</p>
+                    <h2 class="section-title mb-0">Услуги по выручке</h2>
+                </div>
+                <div class="text-secondary small">Что приносит больше всего денег</div>
+            </div>
+
+            {% if service_rows %}
+            <div class="report-rank-list">
+                {% for row in service_rows %}
+                <div class="report-rank-row">
+                    <div class="report-rank-row__head">
+                        <div>
+                            <div class="fw-semibold">{{ row.icon }} {{ row.name }}</div>
+                            <div class="text-secondary small">{{ row.appointments }} услуг в закрытых визитах</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-semibold">{{ format_won(row.revenue) }}</div>
+                            <div class="text-secondary small">{{ row.share_percent }}%</div>
+                        </div>
+                    </div>
+                    <div class="report-progress report-progress--service">
+                        <span style="width: {{ row.width_percent }}%; background: {{ row.color }};"></span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <article class="planner-empty report-empty">
+                <h3 class="h5 mb-2">Нет данных по услугам</h3>
+                <p class="text-secondary mb-0">Выбранный фильтр пока не содержит оплаченных услуг.</p>
+            </article>
+            {% endif %}
+        </article>
+    </section>
+
+    <article class="panel-card report-panel">
+        <div class="report-panel__head">
+            <div>
+                <p class="small-label mb-1">Таблица</p>
+                <h2 class="section-title mb-0">Детализация по мастерам</h2>
+            </div>
+            <div class="text-secondary small">Полезно для контроля доходов по команде</div>
+        </div>
+
+        <div class="report-table">
+            <div class="report-table__head">
+                <span>Мастер</span>
+                <span>Визиты</span>
+                <span>Выручка</span>
+                <span>Средний чек</span>
+                <span>Топ услуга</span>
+            </div>
+            {% for row in master_rows %}
+            <div class="report-table__row">
+                <span class="fw-semibold">{{ row.name }}</span>
+                <span>{{ row.appointments }}</span>
+                <span>{{ format_won(row.revenue) }}</span>
+                <span>{{ format_won(row.average_ticket) }}</span>
+                <span>
+                    {{ row.top_service_label }}
+                    {% if row.missing_prices_count %}
+                    <small class="report-table__hint">Без цены: {{ row.missing_prices_count }}</small>
+                    {% endif %}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+{% endblock %}

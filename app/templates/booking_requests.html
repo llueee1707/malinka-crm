@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Заявки | Malinka{% endblock %}
+
+{% block body %}
+<section class="bookings-page stack gap-4">
+    <header class="page-toolbar">
+        <div>
+            <p class="small-label mb-1">Раздел</p>
+            <h1 class="page-title mb-2">Заявки с сайта</h1>
+            <p class="page-subtitle mb-0">Новые обращения клиентов через форму на лендинге. Подтверждайте или отклоняйте заявки после проверки.</p>
+        </div>
+    </header>
+
+    <nav class="subsection-tabs">
+        <a href="/booking-requests?section=new" class="subsection-tab {% if page_section == 'new' %}is-active{% endif %}">
+            Новые <span class="badge rounded-pill ms-2 text-bg-light" style="opacity: 0.8">{{ new_requests_count }}</span>
+        </a>
+        <a href="/booking-requests?section=processed" class="subsection-tab {% if page_section == 'processed' %}is-active{% endif %}">
+            Обработанные <span class="badge rounded-pill ms-2 text-bg-light" style="opacity: 0.8">{{ processed_requests_count }}</span>
+        </a>
+    </nav>
+
+    {% if booking_requests %}
+    <section class="bookings-grid">
+        {% for item in booking_requests %}
+        <article class="booking-card">
+            <div class="booking-card__topline">
+                <span>{{ item.created_at.strftime("%d.%m.%Y %H:%M") }}</span>
+                {% if item.status.value == 'new' %}
+                <span class="status-pill status-pill--pending">Новая</span>
+                {% elif item.status.value == 'approved' %}
+                <span class="status-pill status-pill--completed">Подтверждена</span>
+                {% else %}
+                <span class="status-pill status-pill--cancelled">Отклонена</span>
+                {% endif %}
+            </div>
+
+            <div class="booking-person">
+                <div class="avatar-circle avatar-circle--lg">
+                    <span>{{ initials(item.full_name) }}</span>
+                </div>
+                <div>
+                    <div class="booking-person__label">Клиент</div>
+                    <div class="booking-person__name">{{ item.full_name }}</div>
+                    <div class="small text-secondary">{{ item.phone }}</div>
+                </div>
+            </div>
+
+            {% if item.services %}
+            <div class="service-pillbox">
+                {% for service in item.services %}
+                <span class="service-pill">{{ service.name }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="booking-time">
+                <span class="booking-time__label">Желаемая дата</span>
+                <strong>{{ item.preferred_date.strftime("%d.%m.%Y") }} в {{ item.preferred_time.strftime("%H:%M") }}</strong>
+            </div>
+
+            {% if item.preferred_master %}
+            <div class="booking-time">
+                <span class="booking-time__label">Предпочитаемый мастер</span>
+                <strong>{{ item.preferred_master.full_name }}</strong>
+            </div>
+            {% else %}
+            <div class="booking-time">
+                <span class="booking-time__label">Мастер</span>
+                <strong class="text-secondary">Без предпочтений</strong>
+            </div>
+            {% endif %}
+
+            {% if item.comment %}
+            <div class="booking-note">{{ item.comment }}</div>
+            {% endif %}
+
+            {% if item.status.value != 'new' and item.resolved_at %}
+            <div class="booking-time">
+                <span class="booking-time__label">Обработана</span>
+                <strong>{{ item.resolved_at.strftime("%d.%m.%Y %H:%M") }}{% if item.resolved_by %} — {{ item.resolved_by.full_name }}{% endif %}</strong>
+            </div>
+            {% endif %}
+
+            {% if item.appointment %}
+            <div class="booking-time">
+                <span class="booking-time__label">Запись в CRM</span>
+                <strong>#{{ item.appointment.id }} · {{ item.appointment.starts_at.strftime("%d.%m.%Y %H:%M") }}{% if item.appointment.master %} · {{ item.appointment.master.full_name }}{% endif %}</strong>
+            </div>
+            {% endif %}
+
+            <div class="booking-actions booking-actions--stack">
+                {% if item.status.value == 'new' %}
+                <a class="btn btn-primary" href="/booking-requests/{{ item.id }}">Обработать заявку</a>
+                {% else %}
+                <a class="btn btn-outline-light" href="/booking-requests/{{ item.id }}">Подробнее</a>
+                {% endif %}
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+    {% else %}
+    <section class="panel-card">
+        <p class="text-secondary mb-0">
+            {% if page_section == 'new' %}
+            Новых заявок нет. Когда клиент заполнит форму на сайте, она появится здесь.
+            {% else %}
+            Обработанных заявок пока нет.
+            {% endif %}
+        </p>
+    </section>
+    {% endif %}
+</section>
+{% endblock %}

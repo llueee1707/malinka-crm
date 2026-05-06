@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Вход | Malinka{% endblock %}
+
+{% block body %}
+<main class="container min-vh-100 d-flex align-items-center py-4">
+    <section class="auth-card mx-auto w-100">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <img src="/static/icons/icon.svg" alt="Логотип" width="54" height="54">
+            <div>
+                <p class="small-label mb-1">PWA CRM</p>
+                <h1 class="h3 mb-0">Салон красоты</h1>
+            </div>
+        </div>
+
+        <p class="text-secondary mb-4">
+            Мобильная CRM для директора, администратора и мастеров.
+        </p>
+
+        {% if form_error %}
+        <div class="alert alert-danger">{{ form_error }}</div>
+        {% endif %}
+
+        <form method="post" action="/login" class="d-grid gap-3">
+            <div>
+                <label for="username" class="form-label">Логин</label>
+                <input id="username" name="username" class="form-control form-control-lg" required autofocus>
+            </div>
+            <div>
+                <label for="password" class="form-label">Пароль</label>
+                <input id="password" name="password" type="password" class="form-control form-control-lg" required>
+            </div>
+            <button class="btn btn-primary btn-lg w-100" type="submit">Войти</button>
+        </form>
+
+    </section>
+</main>
+{% endblock %}

@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Настройки | Malinka{% endblock %}
+
+{% block body %}
+<section class="settings-page stack gap-4">
+    <header class="page-toolbar settings-page__hero">
+        <p class="small-label mb-1">Настройки</p>
+        <h1 class="h4 mb-0">
+            {% if current_user.role.value == 'master' %}
+            Рабочее пространство мастера
+            {% else %}
+            Настройки салона
+            {% endif %}
+        </h1>
+        <p class="page-subtitle mb-0">
+            {% if current_user.role.value == 'master' %}
+            Персональные параметры рабочего дня и уведомлений.
+            {% else %}
+            Управляйте рабочими часами, каталогом услуг и параметрами, которые влияют на запись клиентов.
+            {% endif %}
+        </p>
+    </header>
+
+    {% if current_user.role.value == 'master' %}
+    <article class="panel-card master-reminders-card">
+        <p class="small-label mb-2">Уведомления</p>
+        <p class="mb-2">Напоминания за N минут до записи. Сейчас это только сохранение настроек, отправку подключим позже в мобильном приложении.</p>
+
+        <form method="post" action="/settings/master-reminders" class="d-grid gap-3 js-master-reminders-form">
+            <div class="master-reminders-input-row">
+                <input class="form-control js-master-reminder-minutes" type="number" min="1" max="1440" step="1" placeholder="Минут до записи">
+                <button class="btn btn-outline-light" type="button" data-master-reminder-add>Добавить</button>
+            </div>
+
+            <div class="master-reminders-list js-master-reminders-list">
+                {% for minutes in master_reminder_offsets %}
+                <div class="master-reminder-item" data-minutes="{{ minutes }}">
+                    <input type="hidden" name="reminder_offsets" value="{{ minutes }}">
+                    <span>За {{ minutes }} мин.</span>
+                    <button class="master-reminder-item__remove" type="button" aria-label="Удалить интервал">&times;</button>
+                </div>
+                {% endfor %}
+            </div>
+
+            <p class="text-secondary mb-0 js-master-reminders-empty" {% if master_reminder_offsets %}hidden{% endif %}>Пока не добавлено ни одного интервала.</p>
+            <p class="text-danger small mb-0 js-master-reminders-error" hidden></p>
+            <p class="text-secondary mb-0">Можно добавить несколько значений, например: 60, 30, 10.</p>
+
+            <div class="service-editor-modal__actions">
+                <button class="btn btn-primary" type="submit">Сохранить напоминания</button>
+            </div>
+        </form>
+    </article>
+    {% else %}
+    <section class="settings-launcher-grid" aria-label="Разделы настроек">
+        {% if can_manage_hours %}
+        <button class="settings-launcher-card" type="button" data-modal-open="settings-hours-modal" aria-label="Часы работы">
+            <span class="settings-launcher-card__icon">🕒</span>
+            <span class="settings-launcher-card__content">
+                <span class="settings-launcher-card__label">Часы работы</span>
+                <span class="settings-launcher-card__description">
+                    Текущий график: {{ settings_obj.salon_open_time.strftime('%H:%M') }}-{{ settings_obj.salon_close_time.strftime('%H:%M') }}.
+                    Эти границы используются в онлайн-записи.
+                </span>
+            </span>
+            <span class="settings-launcher-card__arrow">›</span>
+        </button>
+        {% endif %}
+
+        {% if can_manage_services %}
+        <button class="settings-launcher-card" type="button" data-modal-open="settings-services-modal" aria-label="Каталог услуг">
+            <span class="settings-launcher-card__icon">◦</span>
+            <span class="settings-launcher-card__content">
+                <span class="settings-launcher-card__label">Каталог услуг</span>
+                <span class="settings-launcher-card__description">
+                    {{ services|length }} услуг в витрине. Названия и иконки показываются на лендинге и в форме записи.
+                </span>
+            </span>
+            <span class="settings-launcher-card__arrow">›</span>
+        </button>
+        {% endif %}
+    </section>
+
+    {% if can_manage_hours %}
+    <div class="appointment-modal" id="settings-hours-modal" {% if not show_hours_modal %}hidden{% endif %}>
+        <div class="appointment-modal__backdrop" data-modal-close="settings-hours-modal"></div>
+        <div class="appointment-modal__dialog settings-panel-modal settings-panel-modal--hours" role="dialog" aria-modal="true" aria-labelledby="settings-hours-title">
+            <div class="appointment-modal__header">
+                <div>
+                    <p class="small-label mb-1">Салон</p>
+                    <h2 class="h4 mb-0" id="settings-hours-title">Часы работы</h2>
+                </div>
+                <button class="appointment-modal__close" type="button" aria-label="Закрыть" data-modal-close="settings-hours-modal">x</button>
+            </div>
+
+            <form method="post" action="/settings" class="appointment-modal-form">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Открытие</label>
+                        <input class="form-control" type="time" name="salon_open_time" value="{{ settings_obj.salon_open_time.strftime('%H:%M') }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Закрытие</label>
+                        <input class="form-control" type="time" name="salon_close_time" value="{{ settings_obj.salon_close_time.strftime('%H:%M') }}" required>
+                    </div>
+                </div>
+                <div class="service-editor-modal__actions">
+                    <button class="btn btn-primary" type="submit">Сохранить настройки</button>
+                    <button class="btn btn-outline-light" type="button" data-modal-close="settings-hours-modal">Закрыть</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if can_manage_services %}
+    <div class="appointment-modal" id="settings-services-modal" {% if not show_services_modal %}hidden{% endif %}>
+        <div class="appointment-modal__backdrop" data-modal-close="settings-services-modal"></div>
+        <div class="appointment-modal__dialog settings-panel-modal settings-panel-modal--services" role="dialog" aria-modal="true" aria-labelledby="settings-services-title">
+            <div class="appointment-modal__header">
+                <div>
+                    <p class="small-label mb-1">Услуги</p>
+                    <h2 class="h4 mb-1" id="settings-services-title">Каталог услуг</h2>
+                    <p class="text-secondary mb-0">Здесь только названия и значки. Назначение услуг и цены для мастеров настраиваются в разделе команды.</p>
+                </div>
+                <div class="settings-modal-header-actions">
+                    <button class="appointment-modal__close settings-services-modal__close" type="button" aria-label="Закрыть" data-modal-close="settings-services-modal">x</button>
+                    {% if edit_services %}
+                    <a href="/settings?settings_panel=services" class="btn btn-sm btn-outline-light">Завершить редактирование</a>
+                    {% else %}
+                    <a href="/settings?settings_panel=services&services_edit=1" class="btn btn-sm btn-outline-light">Редактировать</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if services %}
+            <div class="service-catalog-grid">
+                {% if edit_services %}
+                <button
+                    class="service-catalog-card service-catalog-card--add js-service-editor-open"
+                    type="button"
+                    data-modal-open="service-editor-modal"
+                    data-service-mode="create"
+                    data-service-title="Новая услуга"
+                    data-service-submit="Добавить"
+                >
+                    <div class="service-catalog-card__icon service-catalog-card__icon--add">+</div>
+                    <div class="service-catalog-card__name">Добавить</div>
+                </button>
+                {% endif %}
+
+                {% for service in services %}
+                <article class="service-catalog-card">
+                    {% if edit_services %}
+                    <div class="service-catalog-card__actions">
+                        <button
+                            class="service-card-action service-card-action--edit js-service-editor-open"
+                            type="button"
+                            aria-label="Изменить {{ service.name }}"
+                            data-modal-open="service-editor-modal"
+                            data-service-mode="edit"
+                            data-service-id="{{ service.id }}"
+                            data-service-name="{{ service.name }}"
+                            data-service-icon="{{ service.icon or service_icon_choices[0] }}"
+                            data-service-title="Редактирование услуги"
+                            data-service-submit="Сохранить"
+                        >&#9998;</button>
+                        <form method="post" action="/services/{{ service.id }}/delete" class="js-confirm-form" data-confirm-message="Удалить услугу «{{ service.name }}»?">
+                            <button class="service-card-action service-card-action--delete" type="submit" aria-label="Удалить {{ service.name }}">&times;</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                    <div class="service-catalog-card__icon">{{ service.icon or initials(service.name) }}</div>
+                    <div class="service-catalog-card__name">{{ service.name }}</div>
+                </article>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="service-catalog-grid">
+                {% if edit_services %}
+                <button
+                    class="service-catalog-card service-catalog-card--add js-service-editor-open"
+                    type="button"
+                    data-modal-open="service-editor-modal"
+                    data-service-mode="create"
+                    data-service-title="Новая услуга"
+                    data-service-submit="Добавить"
+                >
+                    <div class="service-catalog-card__icon service-catalog-card__icon--add">+</div>
+                    <div class="service-catalog-card__name">Добавить</div>
+                </button>
+                {% else %}
+                <article class="empty-state py-4">
+                    <h2 class="h6 mb-2">Пока нет услуг</h2>
+                    <p class="text-secondary mb-0">Нажмите «Редактировать», чтобы добавить первую услугу.</p>
+                </article>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if edit_services %}
+    {% set selected_icon = editing_service.icon if editing_service else service_icon_choices[0] %}
+    <div class="appointment-modal" id="service-editor-modal" {% if not editing_service %}hidden{% endif %}>
+        <div class="appointment-modal__backdrop" data-modal-close="service-editor-modal"></div>
+        <div class="appointment-modal__dialog service-editor-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="service-editor-title">
+            <div class="appointment-modal__header">
+                <div>
+                    <p class="small-label mb-1">Услуги</p>
+                    <h2 class="h4 mb-0" id="service-editor-title">{% if editing_service %}Редактирование услуги{% else %}Новая услуга{% endif %}</h2>
+                </div>
+                <button class="appointment-modal__close" type="button" aria-label="Закрыть" data-modal-close="service-editor-modal">x</button>
+            </div>
+
+            <form method="post" action="/services/save" class="appointment-modal-form js-service-editor-form">
+                <input type="hidden" name="service_id" value="{{ editing_service.id if editing_service else '' }}">
+                <div>
+                    <label class="form-label" for="service-modal-name">Название услуги</label>
+                    <input id="service-modal-name" class="form-control" name="name" value="{{ editing_service.name if editing_service else '' }}" placeholder="Введите название услуги" required>
+                </div>
+                <div>
+                    <span class="form-label d-block mb-2">Значок</span>
+                    <div class="service-icon-picker">
+                        {% for icon in service_icon_choices %}
+                        <label class="service-icon-choice {% if selected_icon == icon %}is-selected{% endif %}">
+                            <input class="service-icon-choice__input" type="radio" name="icon" value="{{ icon }}" {% if selected_icon == icon %}checked{% endif %}>
+                            <span class="service-icon-choice__symbol">{{ icon }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="service-editor-modal__actions">
+                    <button class="btn btn-primary js-service-editor-submit" type="submit">{% if editing_service %}Сохранить{% else %}Добавить{% endif %}</button>
+                    <button class="btn btn-outline-light" type="button" data-modal-close="service-editor-modal">Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+    {% endif %}
+
+    <article class="settings-account-card">
+        <div>
+            <p class="small-label mb-1">Аккаунт</p>
+            <h2 class="settings-account-card__title">{{ current_user.full_name }}</h2>
+            <p class="text-secondary mb-0">{{ role_label(current_user.role) }} · {{ current_user.username }}</p>
+        </div>
+        <form method="post" action="/logout">
+            <button class="btn btn-outline-light" type="submit">Выйти</button>
+        </form>
+    </article>
+</section>
+{% endblock %}

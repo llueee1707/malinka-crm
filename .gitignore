@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+
+# Project secrets and runtime data
+.env
+.env.local
+salon.db
+salon.db-journal
+*.sqlite
+*.sqlite3
+
+# Uploaded user content (do not ship test data)
+app/static/uploads/avatars/*
+app/static/uploads/receipts/*
+!app/static/uploads/avatars/.gitkeep
+!app/static/uploads/receipts/.gitkeep
+
+# Logs
+*.log
+*.err.log
+*.out.log
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Test / dev artifacts
+.playwright-mcp/
+*.png
+!app/static/icons/*.png
+*.docx
+*.xlsx
+*.pptx
+
+# Misc
+System.Drawing.Drawing2D.GraphicsPath

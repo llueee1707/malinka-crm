@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+{% from "_appointment_form_macro.html" import render_appointment_form with context %}
+
+{% block title %}{{ appointments_page_title }} | Malinka{% endblock %}
+
+{% block body %}
+<section class="bookings-page stack gap-4">
+    {% if not is_calendar_day_view %}
+    <nav class="subsection-tabs">
+        <a href="/appointments?section=pending&period={{ active_period }}{% if selected_master_id %}&master_id={{ selected_master_id }}{% endif %}{% if selected_service_id %}&service_id={{ selected_service_id }}{% endif %}" class="subsection-tab {% if appointments_page_kind == 'pending' %}is-active{% endif %}">
+            Ожидающие <span class="badge rounded-pill ms-2 text-bg-light" style="opacity: 0.8">{{ pending_count }}</span>
+        </a>
+        <a href="/appointments?section=completed&period={{ active_period }}{% if selected_master_id %}&master_id={{ selected_master_id }}{% endif %}{% if selected_service_id %}&service_id={{ selected_service_id }}{% endif %}" class="subsection-tab {% if appointments_page_kind == 'completed' %}is-active{% endif %}">
+            Выполненные <span class="badge rounded-pill ms-2 text-bg-light" style="opacity: 0.8">{{ completed_count }}</span>
+        </a>
+    </nav>
+    {% endif %}
+
+    <header class="page-toolbar">
+        <div>
+            <p class="small-label mb-1">Раздел</p>
+            <h1 class="page-title mb-2">{{ appointments_page_title }}</h1>
+            <p class="page-subtitle mb-0">{{ appointments_page_lead }}</p>
+        </div>
+        <div class="page-toolbar__actions">
+            {% if can_manage_appointments %}
+            <a class="btn btn-primary" href="/appointments/new">Новая запись</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="section-toolbar">
+        {% if not is_calendar_day_view %}
+        <div class="filters-grid">
+            <details class="filter-menu">
+                <summary class="filter-menu__trigger">{{ active_period_label }}</summary>
+                <div class="filter-menu__dropdown">
+                    {% for option in filter_options %}
+                    <form method="get" action="{{ section_path }}">
+                        <input type="hidden" name="section" value="{{ appointments_page_kind }}">
+                        <input type="hidden" name="period" value="{{ option.value }}">
+                        {% if selected_master_id %}
+                        <input type="hidden" name="master_id" value="{{ selected_master_id }}">
+                        {% endif %}
+                        {% if selected_service_id %}
+                        <input type="hidden" name="service_id" value="{{ selected_service_id }}">
+                        {% endif %}
+                        <button class="filter-menu__item" type="submit">
+                            <span>{{ option.label }}</span>
+                            <span class="filter-menu__check">{% if active_period == option.value %}✓{% endif %}</span>
+                        </button>
+                    </form>
+                    {% endfor %}
+                </div>
+            </details>
+
+            {% if current_user.role.value in ['director', 'admin'] %}
+            <details class="filter-menu">
+                <summary class="filter-menu__trigger">{{ selected_master.full_name if selected_master else "Все мастера" }}</summary>
+                <div class="filter-menu__dropdown">
+                    <form method="get" action="{{ section_path }}">
+                        <input type="hidden" name="section" value="{{ appointments_page_kind }}">
+                        <input type="hidden" name="period" value="{{ active_period }}">
+                        {% if selected_service_id %}
+                        <input type="hidden" name="service_id" value="{{ selected_service_id }}">
+                        {% endif %}
+                        <button class="filter-menu__item" type="submit">
+                            <span>Все мастера</span>
+                            <span class="filter-menu__check">{% if not selected_master %}✓{% endif %}</span>
+                        </button>
+                    </form>
+                    {% for master in visible_masters %}
+                    <form method="get" action="{{ section_path }}">
+                        <input type="hidden" name="section" value="{{ appointments_page_kind }}">
+                        <input type="hidden" name="period" value="{{ active_period }}">
+                        <input type="hidden" name="master_id" value="{{ master.id }}">
+                        {% if selected_service_id %}
+                        <input type="hidden" name="service_id" value="{{ selected_service_id }}">
+                        {% endif %}
+                        <button class="filter-menu__item" type="submit">
+                            <span>{{ master.full_name }}</span>
+                            <span class="filter-menu__check">{% if selected_master and selected_master.id == master.id %}✓{% endif %}</span>
+                        </button>
+                    </form>
+                    {% endfor %}
+                </div>
+            </details>
+            {% endif %}
+
+            <details class="filter-menu">
+                <summary class="filter-menu__trigger">{{ selected_service.name if selected_service else "Все услуги" }}</summary>
+                <div class="filter-menu__dropdown">
+                    <form method="get" action="{{ section_path }}">
+                        <input type="hidden" name="section" value="{{ appointments_page_kind }}">
+                        <input type="hidden" name="period" value="{{ active_period }}">
+                        {% if selected_master_id %}
+                        <input type="hidden" name="master_id" value="{{ selected_master_id }}">
+                        {% endif %}
+                        <button class="filter-menu__item" type="submit">
+                            <span>Все услуги</span>
+                            <span class="filter-menu__check">{% if not selected_service %}✓{% endif %}</span>
+                        </button>
+                    </form>
+                    {% for service in services %}
+                    <form method="get" action="{{ section_path }}">
+                        <input type="hidden" name="section" value="{{ appointments_page_kind }}">
+                        <input type="hidden" name="period" value="{{ active_period }}">
+                        {% if selected_master_id %}
+                        <input type="hidden" name="master_id" value="{{ selected_master_id }}">
+                        {% endif %}
+                        <input type="hidden" name="service_id" value="{{ service.id }}">
+                        <button class="filter-menu__item" type="submit">
+                            <span>{{ service.name }}</span>
+                            <span class="filter-menu__check">{% if selected_service and selected_service.id == service.id %}✓{% endif %}</span>
+                        </button>
+                    </form>
+                    {% endfor %}
+                </div>
+            </details>
+        </div>
+        {% else %}
+        <a class="btn btn-outline-light btn-sm" href="/calendar?month={{ calendar_day_iso[:7] }}{% if calendar_selected_master %}&master_id={{ calendar_selected_master.id }}{% endif %}">Календарь</a>
+        {% endif %}
+    </div>
+
+    <section class="bookings-grid">
+        {% if show_create_card %}
+        <article class="booking-card booking-card--create">
+            <button class="booking-create-trigger" type="button" data-modal-open="appointment-create-modal" aria-haspopup="dialog">
+                <span class="booking-create-trigger__plus">+</span>
+                <span class="booking-create-trigger__label">Новая запись</span>
+                <span class="booking-create-trigger__hint">Создать запись для своего расписания</span>
+            </button>
+        </article>
+        {% endif %}
+
+        {% for appointment in appointments %}
+        <article class="booking-card {% if not show_actions %}booking-card--finished{% endif %}">
+            <div class="booking-card__topline">
+                <span>{{ appointment.starts_at.strftime("%d.%m.%Y") }}</span>
+                <span class="status-pill status-pill--{{ appointment_visual_status(appointment) }}">
+                    {{ appointment_visual_status_label(appointment) }}
+                </span>
+            </div>
+
+            <div class="booking-person">
+                <div class="avatar-circle avatar-circle--lg">
+                    {% if appointment.master.avatar_path %}
+                    <img src="{{ appointment.master.avatar_path }}" alt="{{ appointment.master.full_name }}">
+                    {% else %}
+                    <span>{{ initials(appointment.master.full_name) }}</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <div class="booking-person__label">Мастер</div>
+                    <div class="booking-person__name">{{ appointment.master.full_name }}</div>
+                </div>
+            </div>
+
+            <div class="service-pillbox">
+                {% for service in appointment.services %}
+                <span class="service-pill">{{ service.name }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="client-row">
+                <div class="client-row__meta">
+                    <div class="avatar-circle avatar-circle--sm">
+                        {% if appointment.client and appointment.client.avatar_path %}
+                        <img src="{{ appointment.client.avatar_path }}" alt="{{ appointment.client.full_name }}">
+                        {% else %}
+                        <span>{{ initials(appointment.client.full_name if appointment.client else appointment.guest_label) }}</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div class="booking-person__label">Клиент</div>
+                        <div class="client-row__name">{{ appointment.client.full_name if appointment.client else appointment.guest_label or "Гость" }}</div>
+                    </div>
+                </div>
+                {% if appointment.client_id %}
+                <a class="btn btn-outline-light btn-sm" href="/clients/{{ appointment.client_id }}">История посещений</a>
+                {% else %}
+                <span class="ghost-chip">Гость</span>
+                {% endif %}
+            </div>
+
+            <div class="booking-time">
+                <span class="booking-time__label">Старт работы</span>
+                <strong>{{ appointment.starts_at.strftime("%H:%M") }}</strong>
+            </div>
+            {% if appointment.completed_at %}
+            <div class="booking-time">
+                <span class="booking-time__label">Закончено</span>
+                <strong>{{ appointment.completed_at.strftime("%H:%M") }}</strong>
+            </div>
+            {% endif %}
+
+            {% set pricing = appointment_price_map.get(appointment.id) %}
+            {% if pricing %}
+                {% if pricing.missing_service_names %}
+                <div class="booking-time">
+                    <span class="booking-time__label">Сумма</span>
+                    <strong>Нет цен</strong>
+                </div>
+                {% else %}
+                <div class="booking-time">
+                    <span class="booking-time__label">Сумма</span>
+                    <strong>{{ format_won(pricing.total) }}</strong>
+                </div>
+                {% endif %}
+            {% endif %}
+
+            {% if appointment.comment %}
+            <div class="booking-note">{{ appointment.comment }}</div>
+            {% endif %}
+
+            {% if appointment.completion_comment %}
+            <div class="booking-note booking-note--success">{{ appointment.completion_comment }}</div>
+            {% endif %}
+
+            {% if appointment.receipt_photos %}
+            <div class="receipt-gallery">
+                {% for photo in appointment.receipt_photos %}
+                <a class="receipt-thumb" href="{{ photo.file_path }}" data-lightbox-src="{{ photo.file_path }}" data-lightbox-alt="Чек по записи {{ appointment.id }}">
+                    <img src="{{ photo.file_path }}" alt="Чек по записи {{ appointment.id }}">
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if show_actions %}
+            <div class="booking-actions booking-actions--stack">
+                <label class="btn btn-outline-light booking-attach-label booking-attach-label--wide" for="booking-receipt-{{ appointment.id }}">
+                    Прикрепить фото
+                </label>
+                <form method="post" action="/appointments/{{ appointment.id }}/status" enctype="multipart/form-data" class="booking-complete-form js-confirm-form" data-confirm-message="Отметить запись как выполненную?">
+                    <input type="hidden" name="status" value="completed">
+                    <input type="hidden" name="section" value="{{ appointments_page_kind }}">
+                    <input type="hidden" name="period" value="{{ active_period }}">
+                    {% if selected_master_id %}
+                    <input type="hidden" name="master_id" value="{{ selected_master_id }}">
+                    {% endif %}
+                    {% if selected_service_id %}
+                    <input type="hidden" name="service_id" value="{{ selected_service_id }}">
+                    {% endif %}
+                    {% if is_calendar_day_view %}
+                    <input type="hidden" name="day" value="{{ calendar_day_iso }}">
+                    {% if calendar_selected_master %}
+                    <input type="hidden" name="master_id" value="{{ calendar_selected_master.id }}">
+                    {% endif %}
+                    {% endif %}
+                    <input type="hidden" name="completion_comment" value="">
+                    <input id="booking-receipt-{{ appointment.id }}" class="booking-attach-input" type="file" name="receipt_photos" accept="image/*,.heic,.heif" capture="environment" multiple>
+                    <button class="btn btn-primary booking-action-btn" type="submit">Выполнено</button>
+                </form>
+                <form method="post" action="/appointments/{{ appointment.id }}/status" class="booking-cancel-form js-confirm-form" data-confirm-message="Отменить эту запись?">
+                    <input type="hidden" name="status" value="cancelled">
+                    <input type="hidden" name="section" value="{{ appointments_page_kind }}">
+                    <input type="hidden" name="period" value="{{ active_period }}">
+                    {% if selected_master_id %}
+                    <input type="hidden" name="master_id" value="{{ selected_master_id }}">
+                    {% endif %}
+                    {% if selected_service_id %}
+                    <input type="hidden" name="service_id" value="{{ selected_service_id }}">
+                    {% endif %}
+                    {% if is_calendar_day_view %}
+                    <input type="hidden" name="day" value="{{ calendar_day_iso }}">
+                    {% if calendar_selected_master %}
+                    <input type="hidden" name="master_id" value="{{ calendar_selected_master.id }}">
+                    {% endif %}
+                    {% endif %}
+                    <button class="btn btn-outline-danger booking-action-btn" type="submit">Отменить</button>
+                </form>
+            </div>
+            {% endif %}
+        </article>
+        {% else %}
+        <article class="planner-empty">
+            <h3 class="h5 mb-2">{{ appointments_empty_title }}</h3>
+            <p class="text-secondary mb-0">{{ appointments_empty_text }}</p>
+        </article>
+        {% endfor %}
+    </section>
+</section>
+
+{% if show_create_card %}
+<div class="appointment-modal" id="appointment-create-modal" {% if not create_modal_open %}hidden{% endif %}>
+    <div class="appointment-modal__backdrop" data-modal-close="appointment-create-modal"></div>
+    <div class="appointment-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="appointment-create-title">
+        <div class="appointment-modal__header">
+            <div>
+                <p class="small-label mb-1">Запись</p>
+                <h2 class="h4 mb-0" id="appointment-create-title">Создание новой записи</h2>
+            </div>
+            <button class="appointment-modal__close" type="button" aria-label="Закрыть" data-modal-close="appointment-create-modal">x</button>
+        </div>
+        {{ render_appointment_form(
+            action='/appointments',
+            submit_label='Создать',
+            cancel_label='Отмена',
+            modal_mode=True,
+            source='appointments-board',
+            return_section=appointments_page_kind,
+            return_period=active_period,
+            return_master_id=selected_master_id,
+            return_service_id=selected_service_id
+        ) }}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

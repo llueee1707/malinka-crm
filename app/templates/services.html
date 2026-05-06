@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Услуги | Malinka{% endblock %}
+
+{% block body %}
+<section class="stack gap-3">
+    <header class="panel-card">
+        <p class="small-label mb-1">Услуги и цены</p>
+        <h1 class="h4 mb-0">Справочник услуг и прайс мастеров</h1>
+    </header>
+
+    <form method="post" action="/services/save" class="panel-card d-grid gap-3">
+        <input type="hidden" name="service_id" value="{{ editing_service.id if editing_service else '' }}">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">{% if editing_service %}Редактировать услугу{% else %}Новая услуга{% endif %}</h2>
+            {% if editing_service %}
+            <a href="/services" class="btn btn-sm btn-outline-light">Сбросить</a>
+            {% endif %}
+        </div>
+        <div>
+            <label class="form-label">Название услуги</label>
+            <input class="form-control" name="name" value="{{ editing_service.name if editing_service else '' }}" required>
+        </div>
+        <button class="btn btn-primary" type="submit">Сохранить услугу</button>
+    </form>
+
+    <section class="panel-card">
+        <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-3">
+            <div>
+                <div class="small-label">Прайс</div>
+                <h2 class="h5 mb-0">Цены конкретного мастера</h2>
+            </div>
+            <form method="get" action="/services">
+                <select class="form-select" name="master_id" onchange="this.form.submit()">
+                    {% for master in masters %}
+                    <option value="{{ master.id }}" {% if selected_master and selected_master.id == master.id %}selected{% endif %}>{{ master.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+
+        {% if selected_master %}
+        <form method="post" action="/services/prices" class="d-grid gap-3">
+            <input type="hidden" name="master_id" value="{{ selected_master.id }}">
+            {% for service in services %}
+            <div class="price-row-edit">
+                <div>{{ service.name }}</div>
+                <input class="form-control" type="number" min="0" name="price_{{ service.id }}" value="{{ price_map.get(service.id, '') }}" placeholder="Цена">
+            </div>
+            {% endfor %}
+            <button class="btn btn-primary" type="submit">Сохранить прайс</button>
+        </form>
+        {% else %}
+        <p class="text-secondary mb-0">Сначала создайте мастера в разделе команды.</p>
+        {% endif %}
+    </section>
+
+    <section class="stack gap-3">
+        {% for service in services %}
+        <article class="panel-card d-flex justify-content-between align-items-center gap-3 flex-wrap">
+            <div class="fw-semibold">{{ service.name }}</div>
+            <div class="d-flex gap-2">
+                <a class="btn btn-sm btn-outline-light" href="/services?edit={{ service.id }}{% if selected_master %}&master_id={{ selected_master.id }}{% endif %}">Изменить</a>
+                <form method="post" action="/services/{{ service.id }}/delete" onsubmit="return confirm('Удалить услугу?');">
+                    <button class="btn btn-sm btn-outline-danger" type="submit">Удалить</button>
+                </form>
+            </div>
+        </article>
+        {% else %}
+        <article class="empty-state">
+            <h2 class="h5 mb-2">Услуг пока нет</h2>
+            <p class="text-secondary mb-0">Добавьте первую услугу, чтобы создавать записи и прайс мастеров.</p>
+        </article>
+        {% endfor %}
+    </section>
+</section>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Календарь | Malinka{% endblock %}
+
+{% block body %}
+<section class="stack gap-3">
+    <header class="panel-card d-flex justify-content-between align-items-center gap-3 flex-wrap">
+        <div>
+            <p class="small-label mb-1">Календарь</p>
+            <h1 class="h4 mb-0">{{ month_label(month_start) }}</h1>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-light btn-sm" href="/calendar?month={{ prev_month.strftime('%Y-%m') }}{% if selected_master %}&master_id={{ selected_master.id }}{% endif %}">Назад</a>
+            <a class="btn btn-outline-light btn-sm" href="/calendar?month={{ next_month.strftime('%Y-%m') }}{% if selected_master %}&master_id={{ selected_master.id }}{% endif %}">Вперед</a>
+        </div>
+    </header>
+
+    {% if current_user.role.value in ['director', 'admin'] %}
+    <form method="get" action="/calendar" class="panel-card d-grid gap-2">
+        <input type="hidden" name="month" value="{{ month_start.strftime('%Y-%m') }}">
+        <label class="form-label mb-0">Фильтр по мастеру</label>
+        <select class="form-select" name="master_id" onchange="this.form.submit()">
+            {% if current_user.role.value in ['director', 'admin'] %}
+            <option value="">Все мастера</option>
+            {% endif %}
+            {% for master in visible_masters %}
+            <option value="{{ master.id }}" {% if selected_master and selected_master.id == master.id %}selected{% endif %}>
+                {{ master.full_name }}
+            </option>
+            {% endfor %}
+        </select>
+    </form>
+    {% endif %}
+
+    <div class="calendar-shell">
+    <section class="calendar-grid">
+        {% for week_day in ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"] %}
+        <div class="calendar-grid__weekday">{{ week_day }}</div>
+        {% endfor %}
+
+        {% for week in weeks %}
+            {% for cell in week %}
+            <a href="/calendar/day?day={{ cell.date.isoformat() }}{% if selected_master %}&master_id={{ selected_master.id }}{% endif %}" class="calendar-cell {% if not cell.in_month %}is-muted{% endif %}{% if cell.date == today_date %} is-today{% endif %}">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <span class="calendar-cell__day">{{ cell.date.day }}</span>
+                    {% if cell.count %}
+                    <span class="calendar-cell__count">{{ cell.count }}</span>
+                    {% endif %}
+                </div>
+                <div class="calendar-cell__avatars">
+                    {% for master in cell.masters %}
+                    <div class="mini-avatar" title="{{ master.full_name }}">
+                        {% if master.avatar_path %}
+                        <img src="{{ master.avatar_path }}" alt="{{ master.full_name }}">
+                        {% else %}
+                        <span>{{ initials(master.full_name) }}</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </a>
+            {% endfor %}
+        {% endfor %}
+    </section>
+    </div>
+</section>
+{% endblock %}

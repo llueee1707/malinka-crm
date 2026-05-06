@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Отчеты | Malinka{% endblock %}
+
+{% block body %}
+<section class="stack gap-3">
+    <header class="panel-card d-flex justify-content-between align-items-start gap-3 flex-wrap">
+        <div>
+            <p class="small-label mb-1">Рабочий день</p>
+            <h1 class="h3 mb-1">{{ current_user.full_name }}</h1>
+            <p class="text-secondary mb-0">Роль: {{ role_label(current_user.role) }}</p>
+        </div>
+    </header>
+
+    {% if current_user.role.value in ['director', 'admin'] %}
+    <form method="get" action="/dashboard" class="panel-card d-grid gap-2">
+        <label class="form-label mb-0">Показать записи мастера</label>
+        <select class="form-select" name="master_id" onchange="this.form.submit()">
+            <option value="">Все мастера</option>
+            {% for master in visible_masters %}
+            <option value="{{ master.id }}" {% if selected_master and selected_master.id == master.id %}selected{% endif %}>
+                {{ master.full_name }}
+            </option>
+            {% endfor %}
+        </select>
+    </form>
+    {% endif %}
+
+    <section class="stats-grid">
+        <article class="stat-card">
+            <div class="small-label">Сегодня</div>
+            <div class="stat-card__value">{{ today_count }}</div>
+            <div class="text-secondary small">Записей в выбранной выборке</div>
+        </article>
+        <article class="stat-card">
+            <div class="small-label">7 дней</div>
+            <div class="stat-card__value">{{ week_count }}</div>
+            <div class="text-secondary small">Ближайших визитов</div>
+        </article>
+        {% if current_user.role.value in ['director', 'admin'] %}
+        <article class="stat-card">
+            <div class="small-label">Мастера</div>
+            <div class="stat-card__value">{{ busy_count }}</div>
+            <div class="text-secondary small">Сейчас в статусе «Занят»</div>
+        </article>
+        {% endif %}
+    </section>
+
+    {% if current_user.role.value == 'master' %}
+    <section class="panel-card d-grid gap-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <div class="small-label">Статус мастера</div>
+                <div class="fs-5 fw-semibold">{{ status_label(current_user.availability_status) }}</div>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <form method="post" action="/team/{{ current_user.id }}/status" class="flex-fill">
+                <input type="hidden" name="status" value="free">
+                <input type="hidden" name="next" value="/dashboard">
+                <button class="btn {% if current_user.availability_status.value == 'free' %}btn-primary{% else %}btn-outline-light{% endif %} w-100" type="submit">Свободен</button>
+            </form>
+            <form method="post" action="/team/{{ current_user.id }}/status" class="flex-fill">
+                <input type="hidden" name="status" value="busy">
+                <input type="hidden" name="next" value="/dashboard">
+                <button class="btn {% if current_user.availability_status.value == 'busy' %}btn-primary{% else %}btn-outline-light{% endif %} w-100" type="submit">Занят</button>
+            </form>
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="panel-card">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <div>
+                <div class="small-label">Сегодняшние записи</div>
+                <h2 class="h5 mb-0">Список на текущий день</h2>
+            </div>
+            <a class="btn btn-outline-light btn-sm" href="/calendar/day">Открыть день</a>
+        </div>
+
+        <div class="stack gap-3 timeline-container">
+            {% if today_appointments %}
+                {% for appointment in today_appointments %}
+                <article class="appointment-card timeline-item {% if appointment.status.value == 'completed' %}timeline-item--completed{% endif %}">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">
+                                {{ appointment.client.full_name if appointment.client else appointment.guest_label or "Гость" }}
+                            </div>
+                            <div class="text-secondary small">
+                                {{ appointment.starts_at.strftime("%H:%M") }}
+                                {% if current_user.role.value in ['director', 'admin'] %}
+                                • {{ appointment.master.full_name }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <span class="badge text-bg-dark">{{ appointment.services | length }} усл.</span>
+                    </div>
+                    <div class="mt-3 d-flex flex-wrap gap-2">
+                        {% for service in appointment.services %}
+                        <span class="badge rounded-pill text-bg-light">{{ service.name }}</span>
+                        {% endfor %}
+                    </div>
+                    {% if appointment.comment %}
+                    <div class="note-box mt-3">{{ appointment.comment }}</div>
+                    {% endif %}
+                    {% if appointment.receipt_photos %}
+                    <div class="receipt-gallery mt-3">
+                        {% for photo in appointment.receipt_photos %}
+                        <a class="receipt-thumb" href="{{ photo.file_path }}" data-lightbox-src="{{ photo.file_path }}" data-lightbox-alt="Чек по записи {{ appointment.id }}">
+                            <img src="{{ photo.file_path }}" alt="Чек по записи {{ appointment.id }}">
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% if appointment.status.value == 'pending' and current_user.role.value == 'master' and current_user.id == appointment.master_id %}
+                    <div class="booking-actions booking-actions--stack mt-3">
+                        <label class="btn btn-outline-light booking-attach-label booking-attach-label--wide" for="dashboard-booking-receipt-{{ appointment.id }}">
+                            Прикрепить фото
+                        </label>
+                        <form method="post" action="/appointments/{{ appointment.id }}/status" enctype="multipart/form-data" class="booking-complete-form js-confirm-form" data-confirm-message="Отметить запись как выполненную?">
+                            <input type="hidden" name="status" value="completed">
+                            <input type="hidden" name="section" value="pending">
+                            <input type="hidden" name="period" value="today">
+                            <input type="hidden" name="completion_comment" value="">
+                            <input id="dashboard-booking-receipt-{{ appointment.id }}" class="booking-attach-input" type="file" name="receipt_photos" accept="image/*" capture="environment" multiple>
+                            <button class="btn btn-primary booking-action-btn" type="submit">Выполнено</button>
+                        </form>
+                        <form method="post" action="/appointments/{{ appointment.id }}/status" class="booking-cancel-form js-confirm-form" data-confirm-message="Отменить эту запись?">
+                            <input type="hidden" name="status" value="cancelled">
+                            <input type="hidden" name="section" value="pending">
+                            <input type="hidden" name="period" value="today">
+                            <button class="btn btn-outline-danger booking-action-btn" type="submit">Отменить</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </article>
+                {% endfor %}
+            {% else %}
+            <article class="empty-state">
+                <h2 class="h5 mb-2">Записей на сегодня нет</h2>
+                <p class="text-secondary mb-0">Перейдите в календарь, чтобы посмотреть другие даты или создать новую запись.</p>
+            </article>
+            {% endif %}
+        </div>
+    </section>
+</section>
+{% endblock %}

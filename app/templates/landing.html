@@ -1,0 +1,912 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title data-i18n="meta.title">Malinka - запись в салон красоты</title>
+    <meta name="theme-color" content="#140f16">
+    <meta name="description" data-i18n-attr="content" data-i18n="meta.description"
+          content="Салон красоты Malinka: оставьте онлайн-заявку, и администратор подтвердит удобное время.">
+    <link rel="icon" href="/static/icons/icon.svg" type="image/svg+xml">
+    <link rel="icon" href="/static/icons/icon-192.png" sizes="192x192" type="image/png">
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/app.css?v=20260503-2">
+    <style>
+        :root {
+            --landing-bg: #120f13;
+            --landing-ink: #fff7fb;
+            --landing-muted: rgba(255, 247, 251, 0.72);
+            --landing-subtle: rgba(255, 247, 251, 0.1);
+            --landing-line: rgba(255, 247, 251, 0.14);
+            --landing-panel: rgba(27, 21, 28, 0.86);
+            --landing-rose: #ff8fbc;
+            --landing-berry: #e85690;
+            --landing-gold: #f0c989;
+            --landing-mint: #8ee4c5;
+            --landing-shadow: 0 24px 70px rgba(5, 3, 8, 0.38);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body.landing-body {
+            min-height: 100vh;
+            color: var(--landing-ink);
+            background:
+                radial-gradient(ellipse at 18% 8%, rgba(232, 86, 144, 0.22), transparent 55%),
+                radial-gradient(ellipse at 82% 92%, rgba(142, 228, 197, 0.14), transparent 55%),
+                linear-gradient(180deg, rgba(18, 15, 19, 0.98), rgba(25, 17, 24, 0.98)),
+                var(--landing-bg);
+            background-attachment: fixed;
+        }
+
+        html[lang="ko"] body.landing-body,
+        html[lang="ko"] .landing-page,
+        html[lang="ko"] .landing-page input,
+        html[lang="ko"] .landing-page textarea,
+        html[lang="ko"] .landing-page select,
+        html[lang="ko"] .landing-page button,
+        html[lang="ko"] .landing-modal {
+            font-family: "Noto Sans KR", "Manrope", system-ui, -apple-system, sans-serif;
+        }
+
+        .landing-page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .landing-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 14px clamp(18px, 4vw, 56px);
+            background: rgba(18, 14, 18, 0.74);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+
+        .landing-brand {
+            display: flex;
+            align-items: center;
+            min-width: 0;
+            gap: 12px;
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .landing-brand > span {
+            display: grid;
+            gap: 2px;
+        }
+
+        .landing-brand img {
+            width: 34px;
+            height: 34px;
+            filter: drop-shadow(0 12px 22px rgba(232, 86, 144, 0.3));
+        }
+
+        .landing-brand__title {
+            font-family: "Cormorant Garamond", serif;
+            font-size: 1.65rem;
+            font-weight: 700;
+            line-height: 0.95;
+        }
+
+        html[lang="ko"] .landing-brand__title {
+            font-family: "Cormorant Garamond", "Noto Sans KR", serif;
+        }
+
+        .landing-brand__caption {
+            color: var(--landing-muted);
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .landing-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .lang-switch {
+            display: inline-flex;
+            padding: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 9px;
+            gap: 2px;
+        }
+
+        .lang-switch button {
+            min-height: 34px;
+            padding: 0 10px;
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            color: rgba(255, 247, 251, 0.7);
+            font-weight: 800;
+            font-size: 0.78rem;
+            letter-spacing: 0.06em;
+            cursor: pointer;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+
+        .lang-switch button:hover {
+            color: #fff;
+        }
+
+        .lang-switch button.is-active {
+            background: linear-gradient(135deg, var(--landing-rose), var(--landing-berry));
+            color: #2a0717;
+            box-shadow: 0 8px 18px rgba(232, 86, 144, 0.28);
+        }
+
+        .landing-btn,
+        .landing-page .btn {
+            border-radius: 8px;
+        }
+
+        .landing-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 46px;
+            padding: 0 18px;
+            border: 1px solid transparent;
+            font-weight: 800;
+            text-decoration: none;
+            transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+        }
+
+        .landing-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .landing-btn--primary,
+        .landing-page .btn-primary {
+            border-color: transparent;
+            background: linear-gradient(135deg, var(--landing-rose), var(--landing-berry));
+            color: #2a0717;
+            box-shadow: 0 18px 34px rgba(232, 86, 144, 0.28);
+        }
+
+        .landing-btn--primary:hover,
+        .landing-page .btn-primary:hover,
+        .landing-page .btn-primary:focus {
+            background: linear-gradient(135deg, #ffaad0, #f0679e);
+            color: #2a0717;
+        }
+
+        .landing-btn--ghost,
+        .landing-page .btn-outline-light {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff7fb;
+        }
+
+        .landing-btn--ghost:hover,
+        .landing-page .btn-outline-light:hover,
+        .landing-page .btn-outline-light:focus {
+            border-color: rgba(255, 255, 255, 0.34);
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .landing-main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(28px, 5vw, 64px) clamp(16px, 4vw, 40px);
+        }
+
+        .landing-card-wrap {
+            width: min(560px, 100%);
+        }
+
+        .landing-card-head {
+            display: grid;
+            gap: 10px;
+            text-align: center;
+            margin-bottom: 22px;
+        }
+
+        .landing-label {
+            margin: 0;
+            color: var(--landing-gold);
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .landing-title {
+            margin: 0;
+            font-family: "Cormorant Garamond", serif;
+            font-size: clamp(2rem, 5vw, 2.8rem);
+            font-weight: 700;
+            line-height: 1.18;
+        }
+
+        html[lang="ko"] .landing-title {
+            font-family: "Noto Sans KR", "Cormorant Garamond", serif;
+            font-weight: 700;
+        }
+
+        .landing-copy {
+            margin: 0;
+            color: var(--landing-muted);
+            font-size: 0.98rem;
+            line-height: 1.6;
+        }
+
+        .landing-booking__form,
+        .landing-thanks {
+            display: grid;
+            gap: 16px;
+            padding: clamp(22px, 4vw, 34px);
+            border: 1px solid var(--landing-line);
+            border-radius: 14px;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.064), rgba(255, 255, 255, 0.026)),
+                var(--landing-panel);
+            box-shadow: var(--landing-shadow);
+        }
+
+        .landing-page .form-label {
+            color: rgba(255, 247, 251, 0.88);
+            font-size: 0.86rem;
+            font-weight: 800;
+        }
+
+        .landing-page .form-control,
+        .landing-page .form-select {
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.07);
+            border-color: rgba(255, 255, 255, 0.16);
+            color: var(--landing-ink);
+        }
+
+        .landing-page .form-control::placeholder {
+            color: rgba(255, 247, 251, 0.42);
+        }
+
+        .landing-page .form-control:focus,
+        .landing-page .form-select:focus {
+            border-color: rgba(255, 143, 188, 0.68);
+            box-shadow: 0 0 0 0.22rem rgba(255, 143, 188, 0.16);
+            background: rgba(255, 255, 255, 0.09);
+            color: var(--landing-ink);
+        }
+
+        .landing-services-picker {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .landing-services-picker .service-choice {
+            min-height: 44px;
+            border-radius: 8px;
+        }
+
+        .landing-services-picker .service-choice__label {
+            padding: 10px 12px;
+            font-size: 0.9rem;
+        }
+
+        .landing-thanks {
+            text-align: center;
+        }
+
+        .landing-thanks h3 {
+            margin: 0;
+            font-family: "Cormorant Garamond", serif;
+            font-size: 2rem;
+        }
+
+        html[lang="ko"] .landing-thanks h3 {
+            font-family: "Noto Sans KR", "Cormorant Garamond", serif;
+        }
+
+        .landing-alert {
+            margin: 0;
+            border-radius: 8px;
+        }
+
+        .landing-footer {
+            display: flex;
+            justify-content: center;
+            padding: 22px 16px 28px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--landing-muted);
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        /* Language picker modal */
+        .landing-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(8, 5, 10, 0.78);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.22s ease;
+        }
+
+        .landing-modal.is-open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .landing-modal__card {
+            width: min(420px, 100%);
+            padding: 32px clamp(22px, 4vw, 32px);
+            border: 1px solid var(--landing-line);
+            border-radius: 16px;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+                var(--landing-panel);
+            box-shadow: var(--landing-shadow);
+            transform: translateY(8px) scale(0.98);
+            transition: transform 0.22s ease;
+            text-align: center;
+        }
+
+        .landing-modal.is-open .landing-modal__card {
+            transform: translateY(0) scale(1);
+        }
+
+        .landing-modal__title {
+            margin: 0 0 6px;
+            font-family: "Cormorant Garamond", serif;
+            font-size: 1.7rem;
+            font-weight: 700;
+            line-height: 1.15;
+        }
+
+        .landing-modal__sub {
+            margin: 0 0 22px;
+            color: var(--landing-muted);
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        .landing-modal__list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .landing-modal__btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            min-height: 56px;
+            padding: 10px 18px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--landing-ink);
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+        }
+
+        .landing-modal__btn:hover {
+            background: rgba(255, 255, 255, 0.09);
+            border-color: rgba(255, 143, 188, 0.45);
+            transform: translateY(-1px);
+        }
+
+        .landing-modal__btn-flag {
+            font-size: 1.4rem;
+            line-height: 1;
+        }
+
+        .landing-modal__btn-name {
+            flex: 1;
+        }
+
+        .landing-modal__btn-code {
+            color: var(--landing-muted);
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+        }
+
+        @media (max-width: 680px) {
+            .landing-topbar {
+                padding: 12px 14px;
+                flex-wrap: wrap;
+            }
+
+            .landing-brand__caption {
+                display: none;
+            }
+
+            .landing-actions {
+                gap: 8px;
+            }
+
+            .lang-switch button {
+                min-height: 32px;
+                padding: 0 8px;
+                font-size: 0.74rem;
+            }
+
+            .landing-actions .landing-btn {
+                min-height: 40px;
+                padding: 0 12px;
+                font-size: 0.88rem;
+            }
+
+            .landing-booking__form .btn,
+            .landing-thanks .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="landing-body">
+    <div class="landing-page">
+        <header class="landing-topbar">
+            <a href="/" class="landing-brand" aria-label="Malinka">
+                <img src="/static/icons/icon.svg" alt="">
+                <span>
+                    <span class="landing-brand__title">Malinka</span>
+                    <span class="landing-brand__caption" data-i18n="brand.caption">Салон красоты</span>
+                </span>
+            </a>
+
+            <div class="landing-actions">
+                <div class="lang-switch" role="group" aria-label="Language">
+                    <button type="button" data-lang="ru">RU</button>
+                    <button type="button" data-lang="en">EN</button>
+                    <button type="button" data-lang="ko">한국어</button>
+                </div>
+
+                {% if current_user %}
+                <a class="landing-btn landing-btn--ghost" href="/appointments" data-i18n="actions.openCrm">Открыть CRM</a>
+                {% else %}
+                <a class="landing-btn landing-btn--ghost" href="/login" data-i18n="actions.login">Войти в CRM</a>
+                {% endif %}
+            </div>
+        </header>
+
+        <main class="landing-main">
+            <div class="landing-card-wrap">
+                <div class="landing-card-head">
+                    <p class="landing-label" data-i18n="head.label">Онлайн-запись</p>
+                    <h1 class="landing-title" data-i18n="head.title">Оставьте заявку на удобное время</h1>
+                    <p class="landing-copy" data-i18n="head.copy">
+                        Администратор проверит расписание, уточнит детали и подтвердит визит по телефону.
+                    </p>
+                </div>
+
+                {% if booking_success %}
+                <div class="landing-thanks">
+                    <h3 data-i18n="thanks.title">Заявка принята</h3>
+                    <p class="text-secondary mb-0" data-i18n="thanks.body">
+                        Спасибо! Администратор свяжется с вами по указанному телефону, уточнит детали и подтвердит запись.
+                    </p>
+                    <a class="btn btn-outline-light" href="/" data-i18n="thanks.back">Вернуться на главную</a>
+                </div>
+                {% else %}
+                <form method="post" action="/booking-requests" class="landing-booking__form">
+                    {% if booking_error %}
+                    <div class="alert alert-danger landing-alert">{{ booking_error }}</div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="booking-name" data-i18n="form.name">Имя</label>
+                            <input id="booking-name" name="full_name" class="form-control form-control-lg"
+                                   maxlength="255" required autocomplete="name"
+                                   value="{{ booking_form.full_name | default('', true) }}">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="booking-phone" data-i18n="form.phone">Телефон</label>
+                            <input id="booking-phone" name="phone" type="tel"
+                                   class="form-control form-control-lg" maxlength="30" required autocomplete="tel"
+                                   placeholder="+82 10 1234 5678"
+                                   value="{{ booking_form.phone | default('', true) }}">
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label" for="booking-date" data-i18n="form.date">Дата</label>
+                            <input id="booking-date" name="preferred_date" type="date"
+                                   class="form-control form-control-lg" required
+                                   min="{{ booking_min_date }}"
+                                   value="{{ booking_form.preferred_date | default('', true) }}">
+                            <div class="form-text text-secondary" data-i18n="form.dateHint">Формат: ДД.ММ.ГГГГ</div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label" for="booking-time" data-i18n="form.time">Время</label>
+                            <input id="booking-time" name="preferred_time" type="time"
+                                   class="form-control form-control-lg" required
+                                   min="{{ salon_open_label }}" max="{{ salon_close_label }}"
+                                   value="{{ booking_form.preferred_time | default('', true) }}">
+                            <div class="form-text text-secondary" data-i18n="form.timeHint">Формат: ЧЧ:ММ (24 ч)</div>
+                        </div>
+                    </div>
+
+                    {% if landing_services %}
+                    <div>
+                        <label class="form-label" data-i18n="form.services">Услуги</label>
+                        <div class="service-picker landing-services-picker" role="group" aria-label="Услуги">
+                            {% for service in landing_services %}
+                            <label class="service-choice {% if service.id in booking_form.service_ids %}is-selected{% endif %}">
+                                <input class="service-choice__input" type="checkbox"
+                                       name="service_ids" value="{{ service.id }}"
+                                       {% if service.id in booking_form.service_ids %}checked{% endif %}>
+                                <span class="service-choice__label">{{ service.icon or "✂" }} <span class="service-choice__name" data-service-name="{{ service.name }}">{{ service.name }}</span></span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        <div class="form-text text-secondary" data-i18n="form.servicesHint">Можно выбрать одну или несколько услуг.</div>
+                    </div>
+                    {% endif %}
+
+                    {% if landing_masters %}
+                    <div>
+                        <label class="form-label" for="booking-master" data-i18n="form.master">Предпочтительный мастер</label>
+                        <select id="booking-master" name="preferred_master_id" class="form-select form-select-lg">
+                            <option value="" data-i18n="form.masterAny">Без предпочтений</option>
+                            {% for master in landing_masters %}
+                            <option value="{{ master.id }}"
+                                {% if booking_form.preferred_master_id == master.id %}selected{% endif %}>
+                                {{ master.full_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text text-secondary" data-i18n="form.masterHint">Необязательно: администратор поможет подобрать мастера.</div>
+                    </div>
+                    {% endif %}
+
+                    <div>
+                        <label class="form-label" for="booking-comment" data-i18n="form.comment">Комментарий</label>
+                        <textarea id="booking-comment" name="comment" rows="3"
+                                  class="form-control" maxlength="1000"
+                                  data-i18n-attr="placeholder" data-i18n="form.commentPlaceholder"
+                                  placeholder="Например: хочу обновить цвет, нужна консультация">{{ booking_form.comment | default('', true) }}</textarea>
+                    </div>
+
+                    <button class="btn btn-primary btn-lg" type="submit" data-i18n="form.submit">Отправить заявку</button>
+                    <p class="text-secondary small mb-0 text-center" data-i18n="form.consent">
+                        Нажимая кнопку, вы соглашаетесь на звонок администратора для подтверждения визита.
+                    </p>
+                </form>
+                {% endif %}
+            </div>
+        </main>
+
+        <footer class="landing-footer">
+            <span data-i18n="footer.copy">© 2026 Malinka. Все права защищены.</span>
+        </footer>
+    </div>
+
+    <div class="landing-modal" id="lang-modal" role="dialog" aria-modal="true" aria-labelledby="lang-modal-title" aria-hidden="true">
+        <div class="landing-modal__card">
+            <h2 class="landing-modal__title" id="lang-modal-title">Выберите язык / Select language / 언어 선택</h2>
+            <p class="landing-modal__sub">Choose your preferred language · 원하시는 언어를 선택하세요</p>
+            <div class="landing-modal__list">
+                <button type="button" class="landing-modal__btn" data-lang="ru">
+                    <span class="landing-modal__btn-flag" aria-hidden="true">🇷🇺</span>
+                    <span class="landing-modal__btn-name">Русский</span>
+                    <span class="landing-modal__btn-code">RU</span>
+                </button>
+                <button type="button" class="landing-modal__btn" data-lang="en">
+                    <span class="landing-modal__btn-flag" aria-hidden="true">🇬🇧</span>
+                    <span class="landing-modal__btn-name">English</span>
+                    <span class="landing-modal__btn-code">EN</span>
+                </button>
+                <button type="button" class="landing-modal__btn" data-lang="ko">
+                    <span class="landing-modal__btn-flag" aria-hidden="true">🇰🇷</span>
+                    <span class="landing-modal__btn-name">한국어</span>
+                    <span class="landing-modal__btn-code">KR</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var picker = document.querySelector(".landing-services-picker");
+            if (!picker) {
+                return;
+            }
+            picker.addEventListener("change", function (event) {
+                var target = event.target;
+                if (!(target instanceof HTMLInputElement) || target.type !== "checkbox") {
+                    return;
+                }
+                var label = target.closest(".service-choice");
+                if (label) {
+                    label.classList.toggle("is-selected", target.checked);
+                }
+            });
+        })();
+    </script>
+
+    <script>
+        (function () {
+            var STORAGE_KEY = "malinka.lang";
+            var SUPPORTED = ["ru", "en", "ko"];
+            var DEFAULT_LANG = "ru";
+
+            var DICT = {
+                ru: {
+                    "meta.title": "Malinka — запись в салон красоты",
+                    "meta.description": "Салон красоты Malinka: оставьте онлайн-заявку, и администратор подтвердит удобное время.",
+                    "brand.caption": "Салон красоты",
+                    "actions.openCrm": "Открыть CRM",
+                    "actions.login": "Войти в CRM",
+                    "head.label": "Онлайн-запись",
+                    "head.title": "Оставьте заявку на удобное время",
+                    "head.copy": "Администратор проверит расписание, уточнит детали и подтвердит визит по телефону.",
+                    "thanks.title": "Заявка принята",
+                    "thanks.body": "Спасибо! Администратор свяжется с вами по указанному телефону, уточнит детали и подтвердит запись.",
+                    "thanks.back": "Вернуться на главную",
+                    "form.name": "Имя",
+                    "form.phone": "Телефон",
+                    "form.date": "Дата",
+                    "form.dateHint": "Формат: ДД.ММ.ГГГГ",
+                    "form.time": "Время",
+                    "form.timeHint": "Формат: ЧЧ:ММ (24 ч)",
+                    "form.services": "Услуги",
+                    "form.servicesHint": "Можно выбрать одну или несколько услуг.",
+                    "form.master": "Предпочтительный мастер",
+                    "form.masterAny": "Без предпочтений",
+                    "form.masterHint": "Необязательно: администратор поможет подобрать мастера.",
+                    "form.comment": "Комментарий",
+                    "form.commentPlaceholder": "Например: хочу обновить цвет, нужна консультация",
+                    "form.submit": "Отправить заявку",
+                    "form.consent": "Нажимая кнопку, вы соглашаетесь на звонок администратора для подтверждения визита.",
+                    "footer.copy": "© 2026 Malinka. Все права защищены."
+                },
+                en: {
+                    "meta.title": "Malinka — beauty salon booking",
+                    "meta.description": "Malinka beauty salon: send an online booking request and the administrator will confirm a convenient time.",
+                    "brand.caption": "Beauty salon",
+                    "actions.openCrm": "Open CRM",
+                    "actions.login": "Sign in to CRM",
+                    "head.label": "Online booking",
+                    "head.title": "Request an appointment at a convenient time",
+                    "head.copy": "The administrator will check the schedule, clarify the details and confirm your visit by phone.",
+                    "thanks.title": "Request received",
+                    "thanks.body": "Thank you! The administrator will reach out at the phone number you provided to confirm the details of your visit.",
+                    "thanks.back": "Back to home",
+                    "form.name": "Name",
+                    "form.phone": "Phone",
+                    "form.date": "Date",
+                    "form.dateHint": "Format: MM/DD/YYYY",
+                    "form.time": "Time",
+                    "form.timeHint": "Format: HH:MM (24h)",
+                    "form.services": "Services",
+                    "form.servicesHint": "You can pick one or several services.",
+                    "form.master": "Preferred specialist",
+                    "form.masterAny": "No preference",
+                    "form.masterHint": "Optional — the administrator can help you choose a specialist.",
+                    "form.comment": "Comment",
+                    "form.commentPlaceholder": "For example: want to refresh the color, need a consultation",
+                    "form.submit": "Send request",
+                    "form.consent": "By clicking the button, you agree to a confirmation call from the administrator.",
+                    "footer.copy": "© 2026 Malinka. All rights reserved."
+                },
+                ko: {
+                    "meta.title": "Malinka — 뷰티 살롱 예약",
+                    "meta.description": "Malinka 뷰티 살롱: 온라인으로 예약을 신청하시면 관리자가 편한 시간을 확인해 드립니다.",
+                    "brand.caption": "뷰티 살롱",
+                    "actions.openCrm": "CRM 열기",
+                    "actions.login": "CRM 로그인",
+                    "head.label": "온라인 예약",
+                    "head.title": "원하시는 시간에 예약을 신청하세요",
+                    "head.copy": "관리자가 일정을 확인하고 세부 사항을 안내한 뒤 전화로 방문을 확정해 드립니다.",
+                    "thanks.title": "예약 신청이 접수되었습니다",
+                    "thanks.body": "감사합니다! 입력하신 전화번호로 관리자가 연락드려 세부 사항을 안내하고 예약을 확정해 드립니다.",
+                    "thanks.back": "홈으로 돌아가기",
+                    "form.name": "이름",
+                    "form.phone": "전화번호",
+                    "form.date": "날짜",
+                    "form.dateHint": "형식: YYYY.MM.DD",
+                    "form.time": "시간",
+                    "form.timeHint": "형식: HH:MM (24시간)",
+                    "form.services": "서비스",
+                    "form.servicesHint": "하나 또는 여러 서비스를 선택할 수 있습니다.",
+                    "form.master": "선호하는 전문가",
+                    "form.masterAny": "상관없음",
+                    "form.masterHint": "선택 사항입니다 — 관리자가 전문가를 추천해 드릴 수 있습니다.",
+                    "form.comment": "코멘트",
+                    "form.commentPlaceholder": "예: 컬러를 새로 하고 싶어요, 상담이 필요합니다",
+                    "form.submit": "예약 신청",
+                    "form.consent": "버튼을 클릭하면 예약 확정을 위한 관리자의 통화에 동의하는 것으로 간주됩니다.",
+                    "footer.copy": "© 2026 Malinka. 모든 권리 보유."
+                }
+            };
+
+            function detectInitialLang() {
+                try {
+                    var saved = window.localStorage.getItem(STORAGE_KEY);
+                    if (saved && SUPPORTED.indexOf(saved) !== -1) {
+                        return { lang: saved, fromStorage: true };
+                    }
+                } catch (e) {}
+
+                var nav = (navigator.language || navigator.userLanguage || "").toLowerCase();
+                var guessed = DEFAULT_LANG;
+                if (nav.indexOf("ko") === 0) {
+                    guessed = "ko";
+                } else if (nav.indexOf("en") === 0) {
+                    guessed = "en";
+                } else if (nav.indexOf("ru") === 0) {
+                    guessed = "ru";
+                }
+                return { lang: guessed, fromStorage: false };
+            }
+
+            // Service-name dictionary (key = lowercased Russian name, no need for an "ru" entry — original is used).
+            // Names not present here are kept in their original DB form.
+            var SERVICES = {
+                "стрижка":              { en: "Haircut",            ko: "헤어컷" },
+                "стрижка волос":        { en: "Haircut",            ko: "헤어컷" },
+                "мужская стрижка":      { en: "Men's haircut",      ko: "남성 헤어컷" },
+                "женская стрижка":      { en: "Women's haircut",    ko: "여성 헤어컷" },
+                "детская стрижка":      { en: "Kids' haircut",      ko: "어린이 헤어컷" },
+                "окрашивание":          { en: "Hair coloring",      ko: "염색" },
+                "окрашивание волос":    { en: "Hair coloring",      ko: "염색" },
+                "тонирование":          { en: "Hair toning",        ko: "톤다운" },
+                "мелирование":          { en: "Highlights",         ko: "하이라이트" },
+                "балаяж":               { en: "Balayage",           ko: "발레아쥬" },
+                "укладка":              { en: "Styling",            ko: "스타일링" },
+                "завивка":              { en: "Perm",               ko: "펌" },
+                "выпрямление":          { en: "Hair straightening", ko: "매직스트레이트" },
+                "кератин":              { en: "Keratin treatment",  ko: "케라틴 트리트먼트" },
+                "ботокс волос":         { en: "Hair botox",         ko: "헤어 보톡스" },
+                "уход за волосами":     { en: "Hair care",          ko: "헤어 케어" },
+                "маникюр":              { en: "Manicure",           ko: "매니큐어" },
+                "педикюр":              { en: "Pedicure",           ko: "페디큐어" },
+                "наращивание ногтей":   { en: "Nail extensions",    ko: "네일 연장" },
+                "макияж":               { en: "Makeup",             ko: "메이크업" },
+                "вечерний макияж":      { en: "Evening makeup",     ko: "이브닝 메이크업" },
+                "свадебный макияж":     { en: "Bridal makeup",      ko: "신부 메이크업" },
+                "свадебная прическа":   { en: "Bridal hairstyle",   ko: "신부 헤어" },
+                "брови":                { en: "Eyebrows",           ko: "눈썹" },
+                "оформление бровей":    { en: "Brow shaping",       ko: "눈썹 정리" },
+                "ламинирование бровей": { en: "Brow lamination",    ko: "눈썹 라미네이션" },
+                "ресницы":              { en: "Eyelashes",          ko: "속눈썹" },
+                "наращивание ресниц":   { en: "Lash extensions",    ko: "속눈썹 연장" },
+                "ламинирование ресниц": { en: "Lash lamination",    ko: "속눈썹 펌" },
+                "массаж":               { en: "Massage",            ko: "마사지" },
+                "массаж лица":          { en: "Facial massage",     ko: "얼굴 마사지" },
+                "уход за лицом":        { en: "Facial care",        ko: "페이셜 케어" },
+                "чистка лица":          { en: "Facial cleansing",   ko: "페이셜 클렌징" },
+                "пилинг":               { en: "Peeling",            ko: "필링" },
+                "депиляция":            { en: "Hair removal",       ko: "제모" },
+                "эпиляция":             { en: "Epilation",          ko: "왁싱" },
+                "шугаринг":             { en: "Sugaring",           ko: "슈가링" },
+                "spa":                  { en: "Spa",                ko: "스파" },
+                "спа":                  { en: "Spa",                ko: "스파" },
+                "консультация":         { en: "Consultation",       ko: "상담" }
+            };
+
+            function translateService(originalName, lang) {
+                if (!originalName) return originalName;
+                if (lang === "ru") return originalName;
+                var key = String(originalName).trim().toLowerCase();
+                var entry = SERVICES[key];
+                if (entry && entry[lang]) {
+                    return entry[lang];
+                }
+                return originalName;
+            }
+
+            function applyLang(lang) {
+                if (SUPPORTED.indexOf(lang) === -1) {
+                    lang = DEFAULT_LANG;
+                }
+                var dict = DICT[lang];
+                document.documentElement.setAttribute("lang", lang);
+
+                document.querySelectorAll("[data-i18n]").forEach(function (el) {
+                    var key = el.getAttribute("data-i18n");
+                    var value = dict[key];
+                    if (typeof value !== "string") {
+                        return;
+                    }
+                    var attr = el.getAttribute("data-i18n-attr");
+                    if (attr) {
+                        el.setAttribute(attr, value);
+                    } else {
+                        el.textContent = value;
+                    }
+                });
+
+                document.querySelectorAll("[data-service-name]").forEach(function (el) {
+                    var original = el.getAttribute("data-service-name");
+                    el.textContent = translateService(original, lang);
+                });
+
+                var localeMap = { ru: "ru-RU", en: "en-US", ko: "ko-KR" };
+                var locale = localeMap[lang] || "ru-RU";
+                document.querySelectorAll('input[type="date"], input[type="time"]').forEach(function (el) {
+                    el.setAttribute("lang", locale);
+                });
+
+                document.querySelectorAll(".lang-switch button").forEach(function (btn) {
+                    btn.classList.toggle("is-active", btn.getAttribute("data-lang") === lang);
+                });
+            }
+
+            function setLang(lang, persist) {
+                applyLang(lang);
+                if (persist !== false) {
+                    try {
+                        window.localStorage.setItem(STORAGE_KEY, lang);
+                    } catch (e) {}
+                }
+            }
+
+            var modal = document.getElementById("lang-modal");
+
+            function openModal() {
+                if (!modal) return;
+                modal.classList.add("is-open");
+                modal.setAttribute("aria-hidden", "false");
+            }
+
+            function closeModal() {
+                if (!modal) return;
+                modal.classList.remove("is-open");
+                modal.setAttribute("aria-hidden", "true");
+            }
+
+            document.querySelectorAll(".lang-switch button").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    setLang(btn.getAttribute("data-lang"));
+                });
+            });
+
+            if (modal) {
+                modal.querySelectorAll("[data-lang]").forEach(function (btn) {
+                    btn.addEventListener("click", function () {
+                        setLang(btn.getAttribute("data-lang"));
+                        closeModal();
+                    });
+                });
+            }
+
+            var initial = detectInitialLang();
+            applyLang(initial.lang);
+
+            if (!initial.fromStorage) {
+                openModal();
+            }
+        })();
+    </script>
+</body>
+</html>

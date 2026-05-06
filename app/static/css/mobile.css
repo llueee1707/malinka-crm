@@ -1,0 +1,1452 @@
+/* ============================================
+   Malinka CRM — Premium Native Mobile Layout
+   ============================================
+   Replaces the desktop-scale-down approach with
+   a true native mobile-first experience.
+   ============================================ */
+
+/* === 1. DISABLE DESKTOP SCALING ON MOBILE === */
+@media (max-width: 820px) {
+    body.force-desktop-mobile { overflow-x: unset !important; }
+    body.force-desktop-mobile .desktop-mobile-stage {
+        position: static !important;
+        width: 100% !important;
+        min-height: unset !important;
+        overflow: visible !important;
+    }
+    body.force-desktop-mobile .desktop-mobile-shell {
+        position: static !important;
+        width: 100% !important;
+        transform: none !important;
+        transform-origin: unset !important;
+    }
+    body.force-desktop-mobile .app-layout {
+        grid-template-columns: 1fr !important;
+        min-height: unset !important;
+    }
+    body.force-desktop-mobile .sidebar {
+        display: none !important;
+    }
+}
+
+/* === 2. CORE MOBILE LAYOUT === */
+@media (max-width: 820px) {
+    .app-layout {
+        display: flex !important;
+        flex-direction: column !important;
+        min-height: 100dvh;
+        padding-bottom: 78px; /* Space for bottom nav */
+    }
+
+    .sidebar {
+        display: none !important;
+    }
+
+    .content-shell {
+        padding: 16px 14px 24px !important;
+        flex: 1;
+    }
+
+    .content-shell__inner {
+        max-width: 100%;
+    }
+}
+
+/* === 3. BOTTOM NAVIGATION BAR === */
+.bottom-nav,
+.fab-btn,
+.mobile-nav-sheet {
+    display: none;
+}
+
+@media (max-width: 820px) {
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        align-items: center;
+        min-height: calc(70px + env(safe-area-inset-bottom));
+        padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+        background: rgba(14, 11, 20, 0.82);
+        backdrop-filter: blur(28px) saturate(1.6);
+        -webkit-backdrop-filter: blur(28px) saturate(1.6);
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        z-index: 1000;
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .bottom-nav__item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        color: var(--text-muted);
+        font-size: 0.64rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        gap: 4px;
+        min-width: 0;
+        min-height: 58px;
+        padding: 7px 4px;
+        position: relative;
+        border: 0;
+        border-radius: 18px;
+        background: transparent;
+        transition: color 0.25s ease;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    .bottom-nav__item.is-active {
+        color: var(--text-main);
+        background: rgba(184, 119, 255, 0.1);
+    }
+
+    .bottom-nav__item.is-active::before {
+        content: '';
+        position: absolute;
+        top: -1px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 28px;
+        height: 3px;
+        border-radius: 0 0 4px 4px;
+        background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+        box-shadow: 0 2px 12px rgba(184, 119, 255, 0.5);
+    }
+
+    .bottom-nav__icon {
+        font-size: 1.28rem;
+        line-height: 1;
+        transition: transform 0.2s ease;
+    }
+
+    .bottom-nav__item.is-active .bottom-nav__icon {
+        transform: scale(1.15);
+        filter: drop-shadow(0 0 6px rgba(184, 119, 255, 0.4));
+    }
+
+    /* FAB — Floating Action Button */
+    .fab-btn {
+        position: fixed;
+        bottom: 82px;
+        right: 18px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        color: #1c102d;
+        font-size: 2rem;
+        font-weight: 300;
+        line-height: 1;
+        border: none;
+        cursor: pointer;
+        z-index: 1001;
+        box-shadow:
+            0 8px 24px rgba(184, 119, 255, 0.45),
+            0 2px 6px rgba(0, 0, 0, 0.3);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        text-decoration: none;
+    }
+
+    .fab-btn:active {
+        transform: scale(0.9);
+        box-shadow: 0 4px 12px rgba(184, 119, 255, 0.3);
+    }
+
+    .mobile-nav-sheet {
+        position: fixed;
+        inset: 0;
+        z-index: 1900;
+        display: block;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.22s ease;
+    }
+
+    .mobile-nav-sheet[hidden] {
+        display: none;
+    }
+
+    .mobile-nav-sheet.is-open {
+        pointer-events: auto;
+        opacity: 1;
+    }
+
+    body.mobile-nav-open {
+        overflow: hidden;
+    }
+
+    .mobile-nav-sheet__backdrop {
+        position: absolute;
+        inset: 0;
+        border: 0;
+        background: rgba(0, 0, 0, 0.58);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+
+    .mobile-nav-sheet__panel {
+        position: absolute;
+        left: 10px;
+        right: 10px;
+        bottom: calc(82px + env(safe-area-inset-bottom));
+        max-height: min(72dvh, 560px);
+        display: grid;
+        gap: 16px;
+        padding: 10px 14px 16px;
+        overflow: auto;
+        border-radius: 28px;
+        background:
+            radial-gradient(circle at top right, rgba(184, 119, 255, 0.18), transparent 38%),
+            linear-gradient(180deg, rgba(30, 24, 42, 0.98), rgba(18, 14, 26, 0.99));
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 -18px 70px rgba(0, 0, 0, 0.55);
+        transform: translateY(18px);
+        transition: transform 0.24s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .mobile-nav-sheet.is-open .mobile-nav-sheet__panel {
+        transform: translateY(0);
+    }
+
+    .mobile-nav-sheet__handle {
+        width: 42px;
+        height: 4px;
+        margin: 0 auto;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.22);
+    }
+
+    .mobile-nav-sheet__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+    }
+
+    .mobile-nav-sheet__title {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 800;
+    }
+
+    .mobile-nav-sheet__close {
+        width: 42px;
+        height: 42px;
+        border: 0;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text-main);
+        font-size: 1.5rem;
+        line-height: 1;
+    }
+
+    .mobile-nav-sheet__grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .mobile-nav-sheet__link {
+        position: relative;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        min-height: 58px;
+        padding: 12px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.055);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: var(--text-main);
+        text-decoration: none;
+    }
+
+    .mobile-nav-sheet__link.is-active {
+        background: linear-gradient(135deg, rgba(184, 119, 255, 0.22), rgba(151, 80, 255, 0.12));
+        border-color: rgba(184, 119, 255, 0.28);
+    }
+
+    .mobile-nav-sheet__icon {
+        font-size: 1.28rem;
+        line-height: 1;
+    }
+
+    .mobile-nav-sheet__label {
+        min-width: 0;
+        font-weight: 800;
+        line-height: 1.2;
+        white-space: normal;
+    }
+
+    .mobile-nav-sheet__badge {
+        min-width: 24px;
+        height: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 7px;
+        border-radius: 999px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 0.74rem;
+        font-weight: 800;
+    }
+}
+
+/* === 4. MOBILE HEADER — Compact top bar with greeting === */
+@media (max-width: 820px) {
+    .mobile-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 4px 0 14px;
+    }
+
+    .mobile-header__brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .mobile-header__logo {
+        width: 32px;
+        height: 32px;
+    }
+
+    .mobile-header__title {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .mobile-header__user {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .mobile-header__user .avatar-circle {
+        width: 36px;
+        height: 36px;
+        font-size: 0.72rem;
+    }
+}
+
+/* === 5. PREMIUM GLASSMORPHISM CARDS === */
+@media (max-width: 820px) {
+    .panel-card,
+    .appointment-card,
+    .empty-state,
+    .note-box,
+    .booking-card,
+    .booking-history-card,
+    .planner-empty,
+    .page-toolbar {
+        padding: 16px !important;
+        border-radius: 22px !important;
+    }
+
+    .stat-card {
+        padding: 16px;
+        border-radius: 20px;
+        background: linear-gradient(
+            145deg,
+            rgba(38, 30, 48, 0.65),
+            rgba(28, 22, 36, 0.35)
+        );
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .stat-card__value {
+        font-size: 1.65rem;
+        margin: 6px 0 4px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+    }
+
+    .stats-grid .stat-card:nth-child(3) {
+        grid-column: 1 / -1;
+    }
+}
+
+/* === 6. PAGE TOOLBAR / HEADER — Compact on Mobile === */
+@media (max-width: 820px) {
+    .page-toolbar {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 14px !important;
+    }
+
+    .page-toolbar__actions {
+        width: 100%;
+        justify-content: flex-start !important;
+    }
+
+    .page-title {
+        font-size: 1.8rem !important;
+    }
+
+    .page-subtitle {
+        font-size: 0.88rem;
+    }
+
+    .toolbar-chip {
+        padding: 10px 14px;
+        border-radius: 14px;
+        font-size: 0.88rem;
+    }
+
+    .section-toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+    }
+}
+
+/* === 7. TABS & FILTERS — Full-width pills === */
+@media (max-width: 820px) {
+    .subsection-tabs {
+        width: 100% !important;
+        padding: 6px;
+        border-radius: 18px;
+    }
+
+    .subsection-tab {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        padding: 10px 14px;
+        font-size: 0.88rem;
+        border-radius: 14px;
+        text-align: center;
+    }
+
+    .filter-menu {
+        width: 100%;
+    }
+
+    .filter-menu__trigger {
+        width: 100%;
+        min-width: 0 !important;
+        padding: 10px 12px;
+        border-radius: 14px;
+        font-size: 0.88rem;
+    }
+
+    .filter-menu__dropdown {
+        left: 0 !important;
+        right: 0 !important;
+        width: 100%;
+        border-radius: 16px;
+    }
+
+    .filters-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        width: 100%;
+    }
+    
+    .filters-grid .filter-menu {
+        width: 100%;
+    }
+
+    .section-toolbar > .d-flex:not(.filters-scroll-row) {
+        width: 100%;
+        flex-direction: column !important;
+    }
+}
+
+/* === 8. BOOKING CARDS — Timeline-style on mobile === */
+@media (max-width: 820px) {
+    .bookings-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+    }
+
+    .booking-card {
+        gap: 14px !important;
+        padding: 18px !important;
+        border-radius: 22px !important;
+        background: linear-gradient(
+            160deg,
+            rgba(28, 22, 38, 0.95),
+            rgba(20, 16, 28, 0.92)
+        ) !important;
+        position: relative;
+        transition: transform 0.15s ease;
+    }
+
+    .booking-card:active {
+        transform: scale(0.985);
+    }
+
+    /* Compact person rows */
+    .booking-person {
+        gap: 10px;
+    }
+
+    .booking-person .avatar-circle--lg {
+        width: 48px !important;
+        height: 48px !important;
+        font-size: 0.85rem;
+    }
+
+    .booking-person__name {
+        font-size: 1rem;
+    }
+
+    /* Compact time display */
+    .booking-time {
+        padding: 10px 12px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .booking-time strong {
+        font-size: 1.15rem;
+    }
+
+    /* Action buttons */
+    .booking-actions {
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+    }
+
+    .booking-actions--stack {
+        grid-template-columns: 1fr !important;
+    }
+
+    .booking-action-btn {
+        min-height: 48px;
+        border-radius: 16px !important;
+        font-size: 0.95rem;
+    }
+
+    .booking-attach-label {
+        min-height: 44px;
+        border-radius: 16px !important;
+    }
+
+    /* Service pills */
+    .service-pillbox {
+        gap: 6px;
+    }
+
+    .service-pill {
+        padding: 7px 10px;
+        font-size: 0.78rem;
+        border-radius: 12px;
+    }
+
+    /* Client row */
+    .client-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 10px !important;
+        padding: 12px !important;
+        border-radius: 18px !important;
+    }
+
+    /* Create card */
+    .booking-create-trigger {
+        padding: 22px 18px;
+    }
+
+    .booking-create-trigger__plus {
+        width: 56px;
+        height: 56px;
+        border-radius: 18px;
+        font-size: 2.4rem;
+    }
+}
+
+/* === 9. CALENDAR — Mobile scroll list === */
+@media (max-width: 820px) {
+    .calendar-shell {
+        overflow-x: auto;
+        padding-bottom: 6px;
+    }
+
+    .calendar-grid {
+        min-width: 360px !important;
+        gap: 4px !important;
+    }
+
+    .calendar-grid__weekday {
+        font-size: 0.7rem;
+    }
+
+    .calendar-cell {
+        min-height: 70px !important;
+        padding: 8px !important;
+        border-radius: 14px !important;
+    }
+
+    .calendar-cell__day {
+        font-size: 0.85rem;
+    }
+
+    .calendar-cell.is-today .calendar-cell__day {
+        width: 26px;
+        height: 26px;
+    }
+
+    .calendar-cell__count {
+        font-size: 0.7rem;
+    }
+
+    .calendar-cell__avatars {
+        margin-top: 8px;
+        gap: 3px;
+    }
+
+    .mini-avatar {
+        width: 22px;
+        height: 22px;
+        font-size: 0.58rem;
+    }
+}
+
+/* === 10. CLIENTS — iPhone contacts style === */
+@media (max-width: 820px) {
+    .client-page-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+
+    .client-search-panel__row {
+        display: grid !important;
+        grid-template-columns: 1fr auto;
+    }
+
+    .client-catalog-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .client-catalog-card {
+        min-height: unset !important;
+        padding: 16px !important;
+        border-radius: 22px !important;
+        gap: 12px !important;
+    }
+
+    .client-catalog-card__identity {
+        flex-direction: row !important;
+        align-items: center !important;
+    }
+
+    .client-catalog-card__identity .avatar-circle--xl {
+        width: 56px !important;
+        height: 56px !important;
+        font-size: 1rem;
+    }
+
+    .client-catalog-card__name {
+        font-size: 1.02rem;
+    }
+
+    .client-catalog-card__chips {
+        gap: 6px;
+    }
+
+    .team-member-chip {
+        min-height: 32px;
+        padding: 6px 10px;
+        font-size: 0.82rem;
+    }
+}
+
+/* === 11. TEAM — Compact member cards === */
+@media (max-width: 820px) {
+    .team-page-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+
+    .team-catalog-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .team-member-card {
+        min-height: unset !important;
+        padding: 16px !important;
+        border-radius: 22px !important;
+        gap: 14px !important;
+    }
+
+    .team-member-card__identity {
+        flex-direction: row !important;
+        align-items: center !important;
+    }
+
+    .team-member-card__toolbar {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+
+    .team-status-toggle {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .team-service-pill {
+        padding: 10px 12px;
+        border-radius: 14px;
+        font-size: 0.88rem;
+    }
+}
+
+/* === 12. MODALS — Bottom-sheet style on mobile === */
+@media (max-width: 820px) {
+    .appointment-modal__dialog {
+        width: calc(100% - 16px) !important;
+        max-height: calc(100dvh - 20px) !important;
+        margin: auto 8px 10px !important;
+        padding: 20px 16px !important;
+        border-radius: 28px 28px 20px 20px !important;
+    }
+
+    .appointment-modal__header {
+        margin-bottom: 16px;
+    }
+
+    .appointment-modal__close {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        font-size: 1.4rem;
+    }
+
+    .confirm-modal__dialog {
+        width: calc(100% - 24px) !important;
+        margin: auto auto 20px !important;
+        padding: 22px 18px !important;
+        border-radius: 26px !important;
+    }
+
+    .confirm-modal__actions {
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+    }
+
+    /* Editor modals */
+    .client-editor-modal__dialog,
+    .team-member-modal__dialog {
+        width: calc(100% - 16px) !important;
+        max-height: calc(100dvh - 20px) !important;
+    }
+
+    .service-editor-modal__dialog {
+        width: calc(100% - 16px) !important;
+    }
+
+    .service-editor-modal__actions {
+        grid-template-columns: 1fr !important;
+    }
+
+    .appointment-modal-form .appointment-form__actions {
+        grid-template-columns: 1fr !important;
+        position: sticky;
+        bottom: -20px;
+        margin: 0 -16px calc(-20px - env(safe-area-inset-bottom));
+        padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+        background: linear-gradient(180deg, rgba(20, 16, 29, 0), rgba(20, 16, 29, 0.98) 22%);
+        z-index: 2;
+    }
+
+    .appointment-modal-form .appointment-form__actions > .btn {
+        width: 100%;
+        min-height: 48px;
+    }
+}
+
+/* === 13. REPORTS — Mobile-friendly charts === */
+@media (max-width: 820px) {
+    .reports-grid--hero,
+    .reports-grid--details {
+        grid-template-columns: 1fr !important;
+    }
+
+    .report-filters__grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    .reports-stats-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+    }
+
+    .report-stat-card {
+        min-height: 120px !important;
+        padding: 14px !important;
+        border-radius: 20px !important;
+    }
+
+    .report-bars__track {
+        height: 160px !important;
+    }
+
+    .report-donut {
+        width: min(100%, 220px) !important;
+    }
+
+    .report-table__head {
+        display: none !important;
+    }
+
+    .report-table__row {
+        grid-template-columns: 1fr !important;
+        gap: 6px !important;
+    }
+
+    .report-rank-row__head {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+
+    .report-legend__row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+    }
+
+    .report-warning {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+
+    .report-panel__head {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+}
+
+/* === 14. SERVICES — Compact grid === */
+@media (max-width: 820px) {
+    .service-catalog-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+    }
+
+    .service-catalog-card {
+        min-height: 140px !important;
+        padding: 14px 10px 14px !important;
+        border-radius: 20px !important;
+    }
+
+    .service-catalog-card__icon {
+        width: 56px !important;
+        height: 56px !important;
+        border-radius: 18px !important;
+        font-size: 1.2rem !important;
+    }
+
+    .service-catalog-card__name {
+        margin-top: 10px;
+        font-size: 0.88rem;
+    }
+
+    .service-catalog-form {
+        grid-template-columns: 1fr !important;
+    }
+
+    .service-icon-picker {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+
+    .service-catalog-header {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+}
+
+/* === 15. SETTINGS — Responsive launcher grid === */
+@media (max-width: 820px) {
+    .settings-launcher-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .settings-launcher-card {
+        display: grid !important;
+        grid-template-columns: auto minmax(0, 1fr) auto !important;
+        justify-items: stretch;
+        align-content: initial;
+        gap: 12px;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 126px !important;
+        padding: 16px !important;
+        border-radius: 22px !important;
+    }
+
+    .settings-launcher-card__icon {
+        width: 52px !important;
+        height: 52px !important;
+        border-radius: 18px !important;
+        font-size: 1.5rem !important;
+    }
+
+    .settings-launcher-card__label {
+        display: block;
+        color: var(--text-main);
+        font-size: 1rem;
+        font-weight: 800;
+        line-height: 1.2;
+        text-align: left;
+    }
+
+    .settings-launcher-card__description {
+        font-size: 0.84rem;
+        line-height: 1.45;
+    }
+
+    .settings-launcher-card__arrow {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+    }
+
+    .settings-account-card {
+        align-items: stretch;
+        flex-direction: column;
+        padding: 18px;
+        border-radius: 22px;
+    }
+
+    .settings-account-card .btn,
+    .settings-account-card form {
+        width: 100%;
+    }
+
+    .settings-panel-modal,
+    .settings-panel-modal--hours {
+        width: calc(100% - 16px) !important;
+    }
+}
+
+/* === 16. LOGIN — Full-screen mobile auth === */
+@media (max-width: 820px) {
+    .auth-card {
+        max-width: 100% !important;
+        padding: 24px 18px !important;
+        border-radius: 24px !important;
+    }
+}
+
+/* === 17. INSTALL BANNER — Above bottom nav === */
+@media (max-width: 820px) {
+    .install-banner {
+        right: 10px !important;
+        bottom: 80px !important;
+        width: calc(100% - 20px) !important;
+        padding: 14px !important;
+        border-radius: 20px !important;
+    }
+
+    .install-banner__actions {
+        flex-direction: row !important;
+    }
+
+    .install-banner__actions .btn {
+        flex: 1;
+    }
+}
+
+/* === 18. MICRO-ANIMATIONS === */
+.btn {
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+}
+
+@media (max-width: 820px) {
+    .btn:active {
+        transform: scale(0.96);
+    }
+
+    .stat-card {
+        transition: transform 0.15s ease;
+    }
+
+    .stat-card:active {
+        transform: scale(0.97);
+    }
+
+    .client-catalog-card,
+    .team-member-card,
+    .service-catalog-card {
+        transition: transform 0.15s ease !important;
+    }
+
+    .client-catalog-card:active,
+    .team-member-card:active,
+    .service-catalog-card:active {
+        transform: scale(0.98) !important;
+    }
+
+    .calendar-cell {
+        transition: transform 0.12s ease, background 0.2s ease;
+    }
+
+    .calendar-cell:active {
+        transform: scale(0.95);
+        background: rgba(184, 119, 255, 0.08);
+    }
+}
+
+/* === 19. LIGHTBOX — Full-screen on mobile === */
+@media (max-width: 820px) {
+    .image-lightbox__dialog {
+        width: calc(100% - 16px) !important;
+        max-height: calc(100dvh - 24px) !important;
+        margin: 12px auto !important;
+        padding: 14px !important;
+        border-radius: 22px !important;
+    }
+
+    .image-lightbox__image {
+        max-height: calc(100dvh - 100px) !important;
+        border-radius: 16px !important;
+    }
+}
+
+/* === 20. PRICE PANEL === */
+@media (max-width: 820px) {
+    .price-panel {
+        padding: 12px;
+        border-radius: 16px;
+    }
+
+    .price-row,
+    .price-row-edit {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .price-row-edit input {
+        max-width: 100% !important;
+    }
+
+    .price-pillbox {
+        gap: 6px;
+    }
+
+    .price-pill {
+        padding: 8px 10px;
+        border-radius: 12px;
+        font-size: 0.88rem;
+    }
+}
+
+/* === 21. SCROLLBAR HIDING === */
+@media (max-width: 820px) {
+    ::-webkit-scrollbar { width: 0; height: 0; }
+    html { scrollbar-width: none; }
+}
+
+/* === 22. SAFE AREA INSETS === */
+@media (max-width: 820px) {
+    body {
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+    }
+}
+
+/* === 23. TIMELINE FOR MASTERS === */
+@media (max-width: 820px) {
+    .timeline-container {
+        position: relative;
+        padding-left: 32px;
+        margin-top: 14px;
+        margin-bottom: 24px;
+    }
+
+    .timeline-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 12px;
+        width: 2px;
+        background: linear-gradient(to bottom, rgba(184, 119, 255, 0.4), rgba(255,255,255,0.05));
+        border-radius: 2px;
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 24px;
+    }
+
+    .timeline-item::after {
+        content: '';
+        position: absolute;
+        top: 24px;
+        left: -28px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--accent);
+        border: 4px solid var(--bg-start);
+        box-shadow: 0 0 12px var(--accent);
+        z-index: 2;
+        transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .timeline-item--completed::after {
+        background: var(--success);
+        box-shadow: 0 0 12px var(--success-soft);
+    }
+}
+
+/* === 24. PHOTO PICKER BOTTOM SHEET === */
+.photo-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.photo-sheet.is-open {
+    pointer-events: all;
+    opacity: 1;
+}
+
+.photo-sheet__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.photo-sheet__panel {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 12px 16px calc(24px + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(30, 24, 42, 0.98), rgba(20, 16, 28, 0.99));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: none;
+    border-radius: 28px 28px 0 0;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+    box-shadow: 0 -16px 64px rgba(0, 0, 0, 0.5);
+}
+
+.photo-sheet.is-open .photo-sheet__panel {
+    transform: translateY(0);
+}
+
+.photo-sheet__handle {
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 0 auto 18px;
+}
+
+.photo-sheet__title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.photo-sheet__option {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 18px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+    text-align: left;
+}
+
+.photo-sheet__option:active {
+    background: rgba(184, 119, 255, 0.15);
+    transform: scale(0.98);
+}
+
+.photo-sheet__icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(184, 119, 255, 0.12);
+    border: 1px solid rgba(184, 119, 255, 0.2);
+    border-radius: 14px;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.photo-sheet__cancel {
+    width: 100%;
+    padding: 16px;
+    margin-top: 6px;
+    border-radius: 18px;
+    border: none;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-muted);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.photo-sheet__cancel:active {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* === 25. MOBILE POLISH PASS === */
+@media (max-width: 820px) {
+    .app-layout {
+        padding-bottom: calc(86px + env(safe-area-inset-bottom)) !important;
+    }
+
+    .content-shell {
+        padding: 14px 12px calc(104px + env(safe-area-inset-bottom)) !important;
+    }
+
+    .page-title,
+    .section-title,
+    .booking-person__name,
+    .client-row__name,
+    .service-pill,
+    .team-service-pill,
+    .service-catalog-card__name,
+    .team-member-card__info,
+    .client-catalog-card__name,
+    .mobile-nav-sheet__label {
+        overflow-wrap: anywhere;
+    }
+
+    .page-title {
+        line-height: 1.04 !important;
+        letter-spacing: 0 !important;
+    }
+
+    .page-subtitle {
+        line-height: 1.55;
+    }
+
+    .page-toolbar,
+    .panel-card,
+    .appointment-card,
+    .booking-card,
+    .empty-state,
+    .note-box,
+    .booking-history-card,
+    .planner-empty {
+        box-shadow: 0 16px 38px rgba(0, 0, 0, 0.22) !important;
+    }
+
+    .subsection-tabs {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .subsection-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .subsection-tab {
+        white-space: nowrap;
+    }
+
+    .filters-grid,
+    .report-filters__grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .filter-menu__trigger {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .filter-menu__dropdown {
+        z-index: 40;
+        max-height: min(58dvh, 420px);
+        overflow: auto;
+    }
+
+    .filter-menu__item {
+        min-height: 46px;
+    }
+
+    .booking-card__topline,
+    .booking-person,
+    .client-row__meta,
+    .price-row,
+    .price-row-edit {
+        min-width: 0;
+    }
+
+    .booking-card__topline {
+        align-items: flex-start !important;
+        gap: 10px;
+    }
+
+    .status-pill {
+        flex-shrink: 0;
+        max-width: 52%;
+        white-space: normal;
+        text-align: center;
+    }
+
+    .service-pillbox,
+    .price-pillbox {
+        gap: 7px;
+    }
+
+    .service-pill,
+    .price-pill,
+    .team-member-chip {
+        max-width: 100%;
+    }
+
+    .client-row__meta,
+    .booking-person {
+        width: 100%;
+    }
+
+    .client-row__meta > div,
+    .booking-person > div {
+        min-width: 0;
+    }
+
+    .client-row .btn {
+        width: 100%;
+    }
+
+    .reports-stats-grid,
+    .stats-grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    .reports-stats-grid > .report-stat-card,
+    .stats-grid > .stat-card {
+        min-width: 0;
+    }
+
+    .report-stat-card .stat-card__value,
+    .stat-card__value {
+        overflow-wrap: anywhere;
+    }
+
+    .service-catalog-grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    .service-catalog-card__actions {
+        margin-bottom: 8px;
+    }
+
+    .team-member-card__identity,
+    .client-catalog-card__identity {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .team-member-card__info,
+    .client-catalog-card__info {
+        min-width: 0;
+    }
+
+    .appointment-modal,
+    .confirm-modal,
+    .image-lightbox {
+        z-index: 1800 !important;
+    }
+
+    .photo-sheet {
+        z-index: 2000 !important;
+    }
+
+    .fab-btn {
+        bottom: calc(88px + env(safe-area-inset-bottom)) !important;
+    }
+
+    .install-banner {
+        bottom: calc(88px + env(safe-area-inset-bottom)) !important;
+        z-index: 1600 !important;
+    }
+}
+
+@media (max-width: 420px) {
+    .bottom-nav {
+        padding-left: 4px;
+        padding-right: 4px;
+    }
+
+    .bottom-nav__item {
+        font-size: 0.58rem;
+        min-height: 56px;
+        padding-left: 2px;
+        padding-right: 2px;
+    }
+
+    .bottom-nav__icon {
+        font-size: 1.18rem;
+    }
+
+    .service-catalog-grid,
+    .reports-stats-grid,
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media (max-width: 340px) {
+    .mobile-nav-sheet__grid {
+        grid-template-columns: 1fr;
+    }
+}

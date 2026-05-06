@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль клиента | Malinka{% endblock %}
+
+{% block body %}
+<section class="stack gap-4">
+    <header class="panel-card client-profile-hero">
+        <div class="client-profile-hero__main">
+            <div class="avatar-circle avatar-circle--xl">
+                {% if client.avatar_path %}
+                <img src="{{ client.avatar_path }}" alt="{{ client.full_name }}">
+                {% else %}
+                <span>{{ initials(client.full_name) }}</span>
+                {% endif %}
+            </div>
+            <div>
+                <p class="small-label mb-2">Профиль клиента</p>
+                <h1 class="h3 mb-2">{{ client.full_name }}</h1>
+                <div class="client-profile-hero__facts">
+                    <span>{{ client.phone }}</span>
+                    {% if client.instagram %}
+                    <span>{{ client.instagram }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <a class="btn btn-outline-light" href="/appointments">Назад к записям</a>
+    </header>
+
+    <section class="client-profile-grid">
+        <article class="panel-card">
+            <p class="small-label mb-2">Заметки</p>
+            {% if client.notes %}
+            <p class="mb-0">{{ client.notes }}</p>
+            {% else %}
+            <p class="text-secondary mb-0">По клиенту пока нет заметок.</p>
+            {% endif %}
+        </article>
+
+        <article class="panel-card">
+            <p class="small-label mb-2">Записей в истории</p>
+            <div class="client-profile-count">{{ appointments|length }}</div>
+        </article>
+    </section>
+
+    <section class="stack gap-3">
+        <div>
+            <p class="small-label mb-1">История</p>
+            <h2 class="h4 mb-0">Последние визиты</h2>
+        </div>
+
+        {% for appointment in appointments %}
+        <article class="booking-history-card">
+            <div>
+                <div class="fw-semibold">{{ appointment.starts_at.strftime("%d.%m.%Y %H:%M") }}</div>
+                <div class="text-secondary small">{{ appointment.master.full_name }}</div>
+            </div>
+            <div class="booking-history-card__chips">
+                {% for service in appointment.services %}
+                <span class="service-pill">{{ service.name }}</span>
+                {% endfor %}
+            </div>
+            <span class="status-pill status-pill--{{ appointment_visual_status(appointment) }}">
+                {{ appointment_visual_status_label(appointment) }}
+            </span>
+        </article>
+        {% else %}
+        <article class="planner-empty">
+            <h3 class="h5 mb-2">История пуста</h3>
+            <p class="text-secondary mb-0">Для этого клиента пока нет записей.</p>
+        </article>
+        {% endfor %}
+    </section>
+</section>
+{% endblock %}

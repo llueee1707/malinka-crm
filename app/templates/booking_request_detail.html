@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}Заявка #{{ booking_request.id }} | Malinka{% endblock %}
+
+{% block body %}
+{% set form_state = form_state or {
+    'date': booking_request.preferred_date.isoformat(),
+    'time': booking_request.preferred_time.strftime("%H:%M"),
+    'master_id': default_master_id,
+    'client_mode': default_client_mode,
+    'client_id': default_client_id,
+    'service_ids': selected_service_ids,
+    'comment': booking_request.comment or '',
+} %}
+
+<section class="stack gap-4">
+    <header class="page-toolbar">
+        <div>
+            <p class="small-label mb-1">Заявка #{{ booking_request.id }}</p>
+            <h1 class="page-title mb-2">{{ booking_request.full_name }}</h1>
+            <p class="page-subtitle mb-0">Создана {{ booking_request.created_at.strftime("%d.%m.%Y в %H:%M") }}</p>
+        </div>
+        <div class="page-toolbar__actions">
+            <a class="btn btn-outline-light" href="/booking-requests">← К заявкам</a>
+        </div>
+    </header>
+
+    {% if form_error %}
+    <div class="alert alert-danger mb-0">{{ form_error }}</div>
+    {% endif %}
+
+    <div class="panel-card">
+        <h2 class="h5 mb-3">Данные клиента</h2>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <p class="small-label mb-1">Имя</p>
+                <p class="mb-0 fw-semibold">{{ booking_request.full_name }}</p>
+            </div>
+            <div class="col-md-6">
+                <p class="small-label mb-1">Телефон</p>
+                <p class="mb-0 fw-semibold">
+                    <a href="tel:{{ booking_request.phone }}" class="text-reset">{{ booking_request.phone }}</a>
+                </p>
+            </div>
+            <div class="col-md-6">
+                <p class="small-label mb-1">Желаемая дата и время</p>
+                <p class="mb-0 fw-semibold">{{ booking_request.preferred_date.strftime("%d.%m.%Y") }} в {{ booking_request.preferred_time.strftime("%H:%M") }}</p>
+            </div>
+            <div class="col-md-6">
+                <p class="small-label mb-1">Предпочитаемый мастер</p>
+                <p class="mb-0 fw-semibold">{{ booking_request.preferred_master.full_name if booking_request.preferred_master else "Без предпочтений" }}</p>
+            </div>
+            {% if booking_request.services %}
+            <div class="col-12">
+                <p class="small-label mb-1">Запрошенные услуги</p>
+                <div class="service-pillbox">
+                    {% for service in booking_request.services %}
+                    <span class="service-pill">{{ service.name }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% if booking_request.comment %}
+            <div class="col-12">
+                <p class="small-label mb-1">Комментарий клиента</p>
+                <div class="booking-note">{{ booking_request.comment }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if booking_request.status.value == 'new' %}
+    <form method="post" action="/booking-requests/{{ booking_request.id }}/approve" class="panel-card d-grid gap-3">
+        <h2 class="h5 mb-0">Подтверждение заявки</h2>
+        <p class="text-secondary mb-0">
+            Проверьте данные и подтвердите. Мы создадим запись в CRM со статусом «ожидает».
+        </p>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Дата</label>
+                <input class="form-control" type="date" name="date" value="{{ form_state.date }}" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Время</label>
+                <input class="form-control" type="time" name="time" value="{{ form_state.time }}" required>
+            </div>
+        </div>
+
+        <div>
+            <label class="form-label">Мастер</label>
+            <select class="form-select" name="master_id" required>
+                <option value="">Выберите мастера</option>
+                {% for master in visible_masters %}
+                <option value="{{ master.id }}" {% if form_state.master_id == master.id %}selected{% endif %}>{{ master.full_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label class="form-label">Услуги</label>
+            <div class="service-picker js-services-select" role="group" aria-label="Услуги">
+                {% for service in all_services %}
+                <label class="service-choice {% if service.id in form_state.service_ids %}is-selected{% endif %}">
+                    <input class="service-choice__input js-service-checkbox" type="checkbox" name="service_ids" value="{{ service.id }}" {% if service.id in form_state.service_ids %}checked{% endif %}>
+                    <span class="service-choice__label">{{ service.name }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div>
+            <label class="form-label">Клиент</label>
+            <div class="d-grid gap-2">
+                {% if client_candidates %}
+                {% for candidate in client_candidates %}
+                <label class="service-choice {% if form_state.client_mode == 'existing' and form_state.client_id == candidate.id %}is-selected{% endif %}">
+                    <input
+                        class="service-choice__input js-booking-client-radio"
+                        type="radio"
+                        name="client_pick"
+                        value="existing:{{ candidate.id }}"
+                        {% if form_state.client_mode == 'existing' and form_state.client_id == candidate.id %}checked{% endif %}
+                    >
+                    <span class="service-choice__label">
+                        <strong>{{ candidate.full_name }}</strong>
+                        <span class="text-secondary"> · {{ candidate.phone }}</span>
+                    </span>
+                </label>
+                {% endfor %}
+                {% endif %}
+                <label class="service-choice {% if form_state.client_mode == 'new' %}is-selected{% endif %}">
+                    <input
+                        class="service-choice__input js-booking-client-radio"
+                        type="radio"
+                        name="client_pick"
+                        value="new"
+                        {% if form_state.client_mode == 'new' %}checked{% endif %}
+                    >
+                    <span class="service-choice__label">
+                        <strong>Создать нового клиента</strong>
+                        <span class="text-secondary"> · {{ booking_request.full_name }} · {{ booking_request.phone }}</span>
+                    </span>
+                </label>
+            </div>
+            <input type="hidden" name="client_mode" id="booking-client-mode" value="{{ form_state.client_mode }}">
+            <input type="hidden" name="client_id" id="booking-client-id" value="{{ form_state.client_id or '' }}">
+            {% if not client_candidates %}
+            <p class="text-secondary small mb-0 mt-2">
+                Похожих клиентов не найдено — будет создан новый на основе данных заявки.
+            </p>
+            {% endif %}
+        </div>
+
+        <div>
+            <label class="form-label">Комментарий к записи</label>
+            <textarea class="form-control" name="comment" rows="3" placeholder="Необязательно">{{ form_state.comment }}</textarea>
+        </div>
+
+        <div class="booking-actions booking-actions--stack">
+            <button class="btn btn-primary" type="submit">Подтвердить и создать запись</button>
+        </div>
+    </form>
+
+    <form method="post" action="/booking-requests/{{ booking_request.id }}/decline" class="panel-card js-confirm-form" data-confirm-message="Отклонить заявку {{ booking_request.full_name }}?">
+        <h2 class="h5 mb-2">Отклонить заявку</h2>
+        <p class="text-secondary mb-3">Заявка будет перемещена в «Обработанные» со статусом «отклонена». Клиент об этом не получит автоматического уведомления.</p>
+        <button class="btn btn-outline-light" type="submit">Отклонить заявку</button>
+    </form>
+    {% else %}
+    <div class="panel-card">
+        <h2 class="h5 mb-3">Статус заявки</h2>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <p class="small-label mb-1">Статус</p>
+                {% if booking_request.status.value == 'approved' %}
+                <span class="status-pill status-pill--completed">Подтверждена</span>
+                {% else %}
+                <span class="status-pill status-pill--cancelled">Отклонена</span>
+                {% endif %}
+            </div>
+            {% if booking_request.resolved_at %}
+            <div class="col-md-6">
+                <p class="small-label mb-1">Обработана</p>
+                <p class="mb-0 fw-semibold">{{ booking_request.resolved_at.strftime("%d.%m.%Y в %H:%M") }}</p>
+            </div>
+            {% endif %}
+            {% if booking_request.resolved_by %}
+            <div class="col-md-6">
+                <p class="small-label mb-1">Обработал</p>
+                <p class="mb-0 fw-semibold">{{ booking_request.resolved_by.full_name }}</p>
+            </div>
+            {% endif %}
+            {% if booking_request.appointment %}
+            <div class="col-12">
+                <p class="small-label mb-1">Запись в CRM</p>
+                <p class="mb-0 fw-semibold">
+                    #{{ booking_request.appointment.id }} — {{ booking_request.appointment.starts_at.strftime("%d.%m.%Y в %H:%M") }}{% if booking_request.appointment.master %}, {{ booking_request.appointment.master.full_name }}{% endif %}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</section>
+
+<script>
+    (function () {
+        var clientModeInput = document.getElementById('booking-client-mode');
+        var clientIdInput = document.getElementById('booking-client-id');
+        var radios = document.querySelectorAll('.js-booking-client-radio');
+        if (!clientModeInput || !clientIdInput || !radios.length) {
+            return;
+        }
+
+        function applyValue(value) {
+            if (value === 'new') {
+                clientModeInput.value = 'new';
+                clientIdInput.value = '';
+            } else if (value && value.indexOf('existing:') === 0) {
+                clientModeInput.value = 'existing';
+                clientIdInput.value = value.slice('existing:'.length);
+            }
+        }
+
+        radios.forEach(function (input) {
+            input.addEventListener('change', function () {
+                if (!input.checked) return;
+                applyValue(input.value);
+                var labels = document.querySelectorAll('.js-booking-client-radio');
+                labels.forEach(function (radio) {
+                    var label = radio.closest('.service-choice');
+                    if (!label) return;
+                    if (radio.checked) {
+                        label.classList.add('is-selected');
+                    } else {
+                        label.classList.remove('is-selected');
+                    }
+                });
+            });
+        });
+
+        var checked = Array.prototype.find
+            ? Array.prototype.find.call(radios, function (r) { return r.checked; })
+            : null;
+        if (checked) {
+            applyValue(checked.value);
+        }
+
+        var serviceChecks = document.querySelectorAll('.js-service-checkbox');
+        serviceChecks.forEach(function (input) {
+            input.addEventListener('change', function () {
+                var label = input.closest('.service-choice');
+                if (!label) return;
+                if (input.checked) {
+                    label.classList.add('is-selected');
+                } else {
+                    label.classList.remove('is-selected');
+                }
+            });
+        });
+    })();
+</script>
+{% endblock %}

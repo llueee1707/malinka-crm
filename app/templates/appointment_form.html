@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_appointment_form_macro.html" import render_appointment_form with context %}
+
+{% block title %}{% if appointment %}Редактирование записи{% else %}Новая запись{% endif %} | Malinka{% endblock %}
+
+{% block body %}
+<section class="stack gap-3">
+    <header class="panel-card">
+        <p class="small-label mb-1">Запись</p>
+        <h1 class="h4 mb-0">{% if appointment %}Редактирование{% else %}Создание новой записи{% endif %}</h1>
+    </header>
+
+    {{ render_appointment_form(
+        action='/appointments/' ~ appointment.id if appointment else '/appointments',
+        submit_label='Сохранить' if appointment else 'Создать',
+        cancel_href='/calendar/day?day=' ~ form_state.date ~ ('&master_id=' ~ form_state.master_id if form_state.master_id else ''),
+        cancel_label='Назад'
+    ) }}
+</section>
+{% endblock %}

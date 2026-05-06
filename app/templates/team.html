@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}Команда | Malinka{% endblock %}
+
+{% block body %}
+<section class="stack gap-3">
+    <header class="panel-card team-page-header">
+        <div>
+            <p class="small-label mb-1">Команда</p>
+            <h1 class="h4 mb-1">Сотрудники, роли и услуги мастеров</h1>
+            <p class="text-secondary mb-0">Профили сотрудников собраны в одном каталоге. Услуги мастера теперь настраиваются прямо внутри редактирования профиля.</p>
+        </div>
+        {% if edit_team %}
+        <a href="/team" class="btn btn-outline-light">Завершить редактирование</a>
+        {% else %}
+        <a href="/team?team_edit=1" class="btn btn-outline-light">Редактировать</a>
+        {% endif %}
+    </header>
+
+    <section class="team-catalog-grid">
+        {% if edit_team %}
+        <button
+            class="team-member-card team-member-card--add js-team-member-editor-open"
+            type="button"
+            data-member-mode="create"
+            data-member-title="Новый сотрудник"
+            data-member-submit="Создать сотрудника"
+            data-member-id=""
+            data-member-username=""
+            data-member-full-name=""
+            data-member-role="master"
+            data-service-ids=""
+            data-service-prices=""
+        >
+            <div class="team-member-card__add-icon">+</div>
+            <div>
+                <div class="team-member-card__add-title">Новый сотрудник</div>
+                <p class="text-secondary mb-0">Плюс появляется только в режиме редактирования.</p>
+            </div>
+        </button>
+        {% endif %}
+
+        {% for member in members %}
+        {% set service_items = master_service_items_map.get(member.id, []) %}
+        <article class="team-member-card">
+            {% if edit_team %}
+            <div class="team-member-card__actions">
+                <button
+                    class="team-card-action team-card-action--edit js-team-member-editor-open"
+                    type="button"
+                    aria-label="Изменить {{ member.full_name }}"
+                    data-member-mode="edit"
+                    data-member-title="Редактировать сотрудника"
+                    data-member-submit="Сохранить изменения"
+                    data-member-id="{{ member.id }}"
+                    data-member-username="{{ member.username }}"
+                    data-member-full-name="{{ member.full_name }}"
+                    data-member-role="{{ member.role.value }}"
+                    data-service-ids="{% for item in service_items %}{% if not loop.first %},{% endif %}{{ item.id }}{% endfor %}"
+                    data-service-prices="{% for item in service_items %}{% if not loop.first %};{% endif %}{{ item.id }}:{{ item.price }}{% endfor %}"
+                >&#9998;</button>
+                {% if member.id != current_user.id %}
+                <form method="post" action="/team/{{ member.id }}/delete?team_edit=1" class="js-confirm-form mb-0" data-confirm-message="Удалить пользователя «{{ member.full_name }}»?">
+                    <button class="team-card-action team-card-action--delete" type="submit" aria-label="Удалить {{ member.full_name }}">&times;</button>
+                </form>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="team-member-card__identity">
+                <div class="avatar-circle avatar-circle--xl">
+                    {% if member.avatar_path %}
+                    <img src="{{ member.avatar_path }}" alt="{{ member.full_name }}">
+                    {% else %}
+                    <span>{{ initials(member.full_name) }}</span>
+                    {% endif %}
+                </div>
+                <div class="team-member-card__info">
+                    <p class="small-label mb-1">{{ role_label(member.role) }}</p>
+                    <h2 class="h5 mb-1">{{ member.full_name }}</h2>
+                    <p class="text-secondary mb-0">{{ member.username }}</p>
+                </div>
+            </div>
+
+            {% if member.role.value == 'master' %}
+            <div class="team-member-card__toolbar">
+                <form method="post" action="/team/{{ member.id }}/status" class="mb-0">
+                    <input type="hidden" name="status" value="{% if member.availability_status.value == 'busy' %}free{% else %}busy{% endif %}">
+                    <input type="hidden" name="next" value="/team">
+                    <button class="team-status-toggle" type="submit">Статус: {{ status_label(member.availability_status) }}</button>
+                </form>
+            </div>
+
+            <div class="team-member-card__chips">
+                <span class="team-member-chip">{{ service_items|length }} услуг</span>
+                {% if service_items %}
+                {% endif %}
+            </div>
+
+            <div class="team-member-services">
+                {% if service_items %}
+                    {% for item in service_items[:4] %}
+                    <div class="team-service-pill">
+                        <span>{{ item.icon }} {{ item.name }}</span>
+                        <strong>{{ item.price }}</strong>
+                    </div>
+                    {% endfor %}
+                    {% if service_items|length > 4 %}
+                    <div class="team-service-pill team-service-pill--muted">+{{ service_items|length - 4 }} ещё</div>
+                    {% endif %}
+                {% else %}
+                <p class="text-secondary mb-0">У мастера пока нет выбранных услуг.</p>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="team-member-card__chips">
+                <span class="team-member-chip">{{ role_label(member.role) }}</span>
+            </div>
+            <p class="team-member-card__note text-secondary mb-0">Для этой роли персональные услуги не назначаются.</p>
+            {% endif %}
+        </article>
+        {% endfor %}
+    </section>
+</section>
+
+<div class="appointment-modal" id="team-member-modal" {% if not show_member_modal %}hidden{% endif %}>
+    <div class="appointment-modal__backdrop" data-modal-close="team-member-modal"></div>
+    <div class="appointment-modal__dialog team-member-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="team-member-title">
+        <div class="appointment-modal__header">
+            <div>
+                <p class="small-label mb-1">Команда</p>
+                <h2 class="h4 mb-1" id="team-member-title">{% if editing_user %}Редактировать сотрудника{% else %}Новый сотрудник{% endif %}</h2>
+                <p class="text-secondary mb-0">Логин, роль, профиль и услуги мастера настраиваются в одном окне.</p>
+            </div>
+            <button class="appointment-modal__close" type="button" aria-label="Закрыть" data-modal-close="team-member-modal">x</button>
+        </div>
+
+        <form method="post" action="/team/save" enctype="multipart/form-data" class="appointment-modal-form js-team-member-form">
+            <input type="hidden" name="user_id" value="{{ editing_user.id if editing_user else '' }}">
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Логин</label>
+                    <input class="form-control js-team-member-username" name="username" value="{{ editing_user.username if editing_user else '' }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Пароль {% if editing_user %}(оставьте пустым, чтобы не менять){% endif %}</label>
+                    <input class="form-control js-team-member-password" type="password" name="password" placeholder="{% if editing_user %}Новый пароль{% else %}Введите пароль{% endif %}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">ФИО</label>
+                    <input class="form-control js-team-member-full-name" name="full_name" value="{{ editing_user.full_name if editing_user else '' }}" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Роль</label>
+                    <select class="form-select js-team-member-role" name="role">
+                        {% for role in role_choices %}
+                        <option value="{{ role.value }}" {% if (editing_user and editing_user.role == role) or (not editing_user and role.value == 'master') %}selected{% endif %}>{{ role_label(role) }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Аватар</label>
+                    <div class="team-avatar-picker">
+                        <label class="team-avatar-picker__trigger" for="team-member-avatar-input">Выбрать файл</label>
+                        <span class="team-avatar-picker__name js-team-member-avatar-name">Файл не выбран</span>
+                        <input class="js-team-member-avatar" id="team-member-avatar-input" type="file" name="avatar" accept="image/*">
+                    </div>
+                </div>
+            </div>
+
+            <section class="team-member-services-editor js-team-master-services" {% if editing_user and editing_user.role.value != 'master' %}hidden{% endif %}>
+                <div class="team-member-services-editor__header">
+                    <div>
+                        <h3 class="h6 mb-1">Услуги</h3>
+                        <p class="text-secondary mb-0">Нажмите «Все услуги», отметьте нужные и ниже останутся только выбранные услуги мастера.</p>
+                    </div>
+                    {% if services %}
+                    <div class="team-services-dropdown js-team-services-dropdown">
+                        <button
+                            class="btn btn-sm btn-outline-light team-services-toggle js-team-services-toggle"
+                            type="button"
+                            aria-expanded="false"
+                            aria-controls="team-services-panel"
+                        >
+                            Все услуги
+                        </button>
+
+                        <div class="team-services-picker js-team-services-panel" id="team-services-panel" hidden>
+                            {% for service in services %}
+                            {% set selected_price = master_price_map.get(editing_user.id, {}).get(service.id) if editing_user and editing_user.role.value == 'master' else None %}
+                            <label class="team-services-picker__option">
+                                <div class="team-services-picker__meta">
+                                    <span class="team-services-picker__icon">{{ service.icon or initials(service.name) }}</span>
+                                    <span>{{ service.name }}</span>
+                                </div>
+                                <input
+                                    class="form-check-input js-team-service-checkbox"
+                                    type="checkbox"
+                                    name="service_ids"
+                                    value="{{ service.id }}"
+                                    data-service-id="{{ service.id }}"
+                                    {% if selected_price is not none %}checked{% endif %}
+                                >
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if services %}
+                <div class="team-selected-services">
+                    <p class="text-secondary mb-0 js-team-selected-services-empty" {% if editing_user and editing_user.role.value == 'master' and master_price_map.get(editing_user.id, {}) %}hidden{% endif %}>Выберите услуги кнопкой «Все услуги».</p>
+                    <div class="team-selected-services__grid">
+                        {% for service in services %}
+                        {% set selected_price = master_price_map.get(editing_user.id, {}).get(service.id) if editing_user and editing_user.role.value == 'master' else None %}
+                        <article class="team-selected-service js-team-selected-service" data-service-id="{{ service.id }}" {% if selected_price is none %}hidden{% endif %}>
+                            <div class="team-selected-service__head">
+                                <div class="team-selected-service__meta">
+                                    <span class="team-selected-service__icon">{{ service.icon or initials(service.name) }}</span>
+                                    <strong>{{ service.name }}</strong>
+                                </div>
+                            </div>
+                            <input
+                                id="team-service-price-{{ service.id }}"
+                                class="form-control js-team-service-price"
+                                type="number"
+                                min="0"
+                                name="price_{{ service.id }}"
+                                value="{{ selected_price if selected_price is not none else '' }}"
+                                placeholder="0"
+                                {% if selected_price is none %}disabled{% endif %}
+                            >
+                        </article>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-secondary mb-0">Сначала добавьте услуги в настройках.</p>
+                {% endif %}
+            </section>
+
+            <div class="service-editor-modal__actions">
+                <button class="btn btn-primary js-team-member-submit" type="submit">{% if editing_user %}Сохранить изменения{% else %}Создать сотрудника{% endif %}</button>
+                <button class="btn btn-outline-light" type="button" data-modal-close="team-member-modal">Отмена</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

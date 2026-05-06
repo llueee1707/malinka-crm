@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Клиенты | Malinka{% endblock %}
+
+{% block body %}
+<section class="stack gap-3">
+    <header class="panel-card client-page-header">
+        <div>
+            <p class="small-label mb-1">Клиенты</p>
+            <h1 class="h4 mb-1">База клиентов</h1>
+            <p class="text-secondary mb-0">Карточки клиентов, контакты, заметки и быстрый переход в профиль собраны на одной странице.</p>
+        </div>
+        {% if can_manage_clients %}
+            {% if edit_clients %}
+            <a href="/clients" class="btn btn-outline-light">Завершить редактирование</a>
+            {% else %}
+            <a href="/clients?clients_edit=1" class="btn btn-outline-light">Редактировать</a>
+            {% endif %}
+        {% endif %}
+    </header>
+
+    <form method="get" action="/clients" class="panel-card client-search-panel">
+        {% if edit_clients %}
+        <input type="hidden" name="clients_edit" value="1">
+        {% endif %}
+        <label class="form-label mb-0">Поиск по имени, телефону или Instagram</label>
+        <div class="client-search-panel__row">
+            <input class="form-control" name="q" value="{{ search_query }}" placeholder="Например, Айгерим или +998...">
+            <button class="btn btn-outline-light" type="submit">Найти</button>
+        </div>
+    </form>
+
+    <section class="client-catalog-grid">
+        {% if edit_clients %}
+        <button
+            class="client-catalog-card client-catalog-card--add js-client-editor-open"
+            type="button"
+            data-client-mode="create"
+            data-client-title="Новый клиент"
+            data-client-submit="Сохранить клиента"
+            data-client-id=""
+            data-client-full-name=""
+            data-client-phone=""
+            data-client-instagram=""
+            data-client-notes=""
+        >
+            <div class="client-catalog-card__add-icon">+</div>
+            <div>
+                <div class="client-catalog-card__add-title">Новый клиент</div>
+                <p class="text-secondary mb-0">Добавление карточки доступно только в режиме редактирования.</p>
+            </div>
+        </button>
+        {% endif %}
+
+        {% for client in clients %}
+        <article class="client-catalog-card">
+            {% if edit_clients %}
+            <div class="client-catalog-card__actions">
+                <button
+                    class="team-card-action team-card-action--edit js-client-editor-open"
+                    type="button"
+                    aria-label="Изменить {{ client.full_name }}"
+                    data-client-mode="edit"
+                    data-client-title="Редактировать клиента"
+                    data-client-submit="Сохранить изменения"
+                    data-client-id="{{ client.id }}"
+                    data-client-full-name="{{ client.full_name }}"
+                    data-client-phone="{{ client.phone }}"
+                    data-client-instagram="{{ client.instagram or '' }}"
+                    data-client-notes="{{ client.notes or '' }}"
+                >&#9998;</button>
+                <form method="post" action="/clients/{{ client.id }}/delete?clients_edit=1" class="js-confirm-form mb-0" data-confirm-message="Удалить клиента «{{ client.full_name }}»?">
+                    <button class="team-card-action team-card-action--delete" type="submit" aria-label="Удалить {{ client.full_name }}">&times;</button>
+                </form>
+            </div>
+            {% endif %}
+
+            <div class="client-catalog-card__identity">
+                <div class="avatar-circle avatar-circle--xl">
+                    {% if client.avatar_path %}
+                    <img src="{{ client.avatar_path }}" alt="{{ client.full_name }}">
+                    {% else %}
+                    <span>{{ initials(client.full_name) }}</span>
+                    {% endif %}
+                </div>
+                <div class="client-catalog-card__info">
+                    <p class="small-label mb-1">Клиент</p>
+                    <h2 class="client-catalog-card__name mb-1">{{ client.full_name }}</h2>
+                    <p class="text-secondary mb-0">{{ client.phone }}</p>
+                </div>
+            </div>
+
+            <div class="client-catalog-card__chips">
+                <span class="team-member-chip">{{ client_appointment_counts.get(client.id, 0) }} визитов</span>
+                {% if client.instagram %}
+                <span class="team-member-chip team-member-chip--muted">{{ client.instagram }}</span>
+                {% endif %}
+            </div>
+
+            {% if client.notes %}
+            <div class="note-box">{{ client.notes }}</div>
+            {% else %}
+            <p class="client-catalog-card__note text-secondary mb-0">Заметок по клиенту пока нет.</p>
+            {% endif %}
+
+            <div class="client-catalog-card__footer">
+                <a class="btn btn-outline-light btn-sm" href="/clients/{{ client.id }}">Профиль</a>
+            </div>
+        </article>
+        {% else %}
+        <article class="empty-state">
+            <h2 class="h5 mb-2">Клиентов пока нет</h2>
+            <p class="text-secondary mb-0">Создайте первую карточку клиента через кнопку добавления.</p>
+        </article>
+        {% endfor %}
+    </section>
+</section>
+
+<div class="appointment-modal" id="client-editor-modal" {% if not show_client_modal %}hidden{% endif %}>
+    <div class="appointment-modal__backdrop" data-modal-close="client-editor-modal"></div>
+    <div class="appointment-modal__dialog client-editor-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="client-editor-title">
+        <div class="appointment-modal__header">
+            <div>
+                <p class="small-label mb-1">Клиенты</p>
+                <h2 class="h4 mb-1" id="client-editor-title">{% if editing_client %}Редактировать клиента{% else %}Новый клиент{% endif %}</h2>
+                <p class="text-secondary mb-0">Имя, контакты, заметки и аватар клиента настраиваются в одном окне.</p>
+            </div>
+            <button class="appointment-modal__close" type="button" aria-label="Закрыть" data-modal-close="client-editor-modal">x</button>
+        </div>
+
+        <form method="post" action="/clients/save" enctype="multipart/form-data" class="appointment-modal-form js-client-form">
+            <input type="hidden" name="client_id" value="{{ editing_client.id if editing_client else '' }}">
+
+            <div class="row g-3">
+                <div class="col-md-7">
+                    <label class="form-label">ФИО</label>
+                    <input class="form-control js-client-full-name" name="full_name" value="{{ editing_client.full_name if editing_client else '' }}" required>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Телефон</label>
+                    <input class="form-control js-client-phone" name="phone" value="{{ editing_client.phone if editing_client else '' }}" required>
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label">Instagram</label>
+                    <input class="form-control js-client-instagram" name="instagram" value="{{ editing_client.instagram if editing_client else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Аватар</label>
+                    <div class="team-avatar-picker">
+                        <label class="team-avatar-picker__trigger" for="client-avatar-input">Выбрать файл</label>
+                        <span class="team-avatar-picker__name js-client-avatar-name">Файл не выбран</span>
+                        <input class="js-client-avatar" id="client-avatar-input" type="file" name="avatar" accept="image/*">
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <label class="form-label">Заметки</label>
+                <textarea class="form-control js-client-notes" rows="5" name="notes">{{ editing_client.notes if editing_client else '' }}</textarea>
+            </div>
+
+            <div class="service-editor-modal__actions">
+                <button class="btn btn-primary js-client-submit" type="submit">{% if editing_client %}Сохранить изменения{% else %}Сохранить клиента{% endif %}</button>
+                <button class="btn btn-outline-light" type="button" data-modal-close="client-editor-modal">Отмена</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
