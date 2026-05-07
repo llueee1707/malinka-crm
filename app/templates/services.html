@@ -43,9 +43,18 @@
         <form method="post" action="/services/prices" class="d-grid gap-3">
             <input type="hidden" name="master_id" value="{{ selected_master.id }}">
             {% for service in services %}
+            {% set current_price = price_map.get(service.id) %}
             <div class="price-row-edit">
-                <div>{{ service.name }}</div>
-                <input class="form-control" type="number" min="0" name="price_{{ service.id }}" value="{{ price_map.get(service.id, '') }}" placeholder="Цена">
+                <div>
+                    <div>{{ service.name }}</div>
+                    {% if current_price is not none %}
+                    <div class="price-row-edit__preview">{{ format_won(current_price) }}</div>
+                    {% endif %}
+                </div>
+                <div class="price-input-wrap">
+                    <input class="form-control" type="number" min="0" name="price_{{ service.id }}" value="{{ current_price if current_price is not none else '' }}" placeholder="Цена">
+                    <span class="price-input-wrap__suffix">₩</span>
+                </div>
             </div>
             {% endfor %}
             <button class="btn btn-primary" type="submit">Сохранить прайс</button>

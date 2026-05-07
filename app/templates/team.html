@@ -110,7 +110,7 @@
                             {% endif %}
                             {{ item.name }}
                         </span>
-                        <strong>{{ item.price }}</strong>
+                        <strong>{{ format_won(item.price) }}</strong>
                     </div>
                     {% endfor %}
                     {% if service_items|length > 4 %}
@@ -244,16 +244,19 @@
                                     <strong>{{ service.name }}</strong>
                                 </div>
                             </div>
-                            <input
-                                id="team-service-price-{{ service.id }}"
-                                class="form-control js-team-service-price"
-                                type="number"
-                                min="0"
-                                name="price_{{ service.id }}"
-                                value="{{ selected_price if selected_price is not none else '' }}"
-                                placeholder="0"
-                                {% if selected_price is none %}disabled{% endif %}
-                            >
+                            <div class="price-input-wrap">
+                                <input
+                                    id="team-service-price-{{ service.id }}"
+                                    class="form-control js-team-service-price"
+                                    type="number"
+                                    min="0"
+                                    name="price_{{ service.id }}"
+                                    value="{{ selected_price if selected_price is not none else '' }}"
+                                    placeholder="0"
+                                    {% if selected_price is none %}disabled{% endif %}
+                                >
+                                <span class="price-input-wrap__suffix">₩</span>
+                            </div>
                         </article>
                         {% endfor %}
                     </div>

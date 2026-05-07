@@ -230,6 +230,16 @@ def parse_reminder_offsets(raw: str | None) -> list[int]:
     return sorted(result, reverse=True)
 
 
+def normalize_price_form_value(raw: object) -> str:
+    return (
+        str(raw or "")
+        .replace(" ", "")
+        .replace("\u00a0", "")
+        .replace("₩", "")
+        .strip()
+    )
+
+
 def normalize_search_text(value: str | None) -> str:
     if not value:
         return ""
@@ -2460,7 +2470,7 @@ async def master_prices_save(
     form = await request.form()
 
     for service in services:
-        clean = str(form.get(f"price_{service.id}", "")).strip()
+        clean = normalize_price_form_value(form.get(f"price_{service.id}", ""))
         existing = existing_prices.get(service.id)
         if not clean:
             if existing:
@@ -2630,7 +2640,7 @@ async def team_save(
             selected_service_ids &= valid_ids
 
         for service_id in selected_service_ids:
-            raw_price = str(form.get(f"price_{service_id}", "")).strip()
+            raw_price = normalize_price_form_value(form.get(f"price_{service_id}", ""))
             if raw_price and not raw_price.isdigit():
                 return redirect_to(
                     "/team",

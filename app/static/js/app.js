@@ -2,6 +2,14 @@ let deferredInstallPrompt = null;
 const INSTALL_DISMISS_KEY = "malinka-install-dismissed-v1";
 const mobileReceiptSelections = new WeakMap();
 
+function formatWon(value) {
+    const amount = Number.parseInt(value, 10);
+    if (Number.isNaN(amount)) {
+        return "0 ₩";
+    }
+    return `${amount.toLocaleString("ru-RU").replace(/\u00a0/g, " ")} ₩`;
+}
+
 function getFileFingerprint(file) {
     return [file.name, file.size, file.lastModified, file.type].join("::");
 }
@@ -318,7 +326,7 @@ function initPriceCalculator() {
 
         if (!masterId || selectedServices.length === 0) {
             itemsContainer.innerHTML = "";
-            totalNode.textContent = "0";
+            totalNode.textContent = formatWon(0);
             missingNode.textContent = "";
             return;
         }
@@ -333,11 +341,11 @@ function initPriceCalculator() {
             .map((item) => `
                 <div class="price-pill">
                     <span class="price-pill__name">${item.service_name}</span>
-                    <strong class="price-pill__value">${item.price}</strong>
+                    <strong class="price-pill__value">${formatWon(item.price)}</strong>
                 </div>
             `)
             .join("");
-        totalNode.textContent = String(data.total);
+        totalNode.textContent = formatWon(data.total);
         missingNode.textContent = data.missing_services.length
             ? `Не заданы цены: ${data.missing_services.join(", ")}`
             : "";

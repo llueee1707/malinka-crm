@@ -1054,6 +1054,11 @@
         max-width: 100% !important;
     }
 
+    .price-input-wrap {
+        width: 100%;
+        max-width: 100% !important;
+    }
+
     .price-pillbox {
         gap: 6px;
     }

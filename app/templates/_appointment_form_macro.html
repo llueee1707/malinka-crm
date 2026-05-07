@@ -86,7 +86,7 @@
             {% for item in price_summary.items %}
             <div class="price-pill">
                 <span class="price-pill__name">{{ item.service_name }}</span>
-                <strong class="price-pill__value">{{ item.price }}</strong>
+                <strong class="price-pill__value">{{ format_won(item.price) }}</strong>
             </div>
             {% endfor %}
         </div>
@@ -95,7 +95,7 @@
             Не заданы цены: {{ price_summary.missing_service_names|join(", ") }}
             {% endif %}
         </div>
-        <div class="price-total mt-2">Итого: <span class="js-price-total">{{ price_summary.total }}</span></div>
+        <div class="price-total mt-2">Итого: <span class="js-price-total">{{ format_won(price_summary.total) }}</span></div>
     </div>
 
     <div>
