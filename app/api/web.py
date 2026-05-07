@@ -87,17 +87,16 @@ templates.env.globals.update(
     appointment_visual_status_label=appointment_visual_status_label,
 )
 
+SERVICE_IMAGE_ICON_VALUES = tuple(f"salon-service-{index:02d}" for index in range(1, 51))
+SERVICE_IMAGE_ICON_SET = set(SERVICE_IMAGE_ICON_VALUES)
 SERVICE_ICON_CHOICES = [
-    "✂",
-    "🎨",
-    "💅",
-    "✨",
-    "🦶",
-    "💄",
-    "🫧",
-    "🪒",
+    {
+        "value": value,
+        "src": f"/static/service-icons/{value}.png",
+    }
+    for value in SERVICE_IMAGE_ICON_VALUES
 ]
-DEFAULT_SERVICE_ICON = SERVICE_ICON_CHOICES[0]
+DEFAULT_SERVICE_ICON = SERVICE_IMAGE_ICON_VALUES[0]
 REPORT_CHART_COLORS = [
     "#b877ff",
     "#ff93c9",
@@ -128,6 +127,15 @@ def format_won(value: int | float | str | None) -> str:
 
 
 templates.env.globals.update(format_won=format_won)
+
+
+def service_icon_asset(value: str | None) -> str | None:
+    if value in SERVICE_IMAGE_ICON_SET:
+        return f"/static/service-icons/{value}.png"
+    return None
+
+
+templates.env.globals.update(service_icon_asset=service_icon_asset)
 
 
 def redirect_to(path: str, **params: object) -> RedirectResponse:
@@ -2377,9 +2385,7 @@ def service_save(
 
     service_id = to_optional_int(service_id_raw)
     clean_name = name.strip()
-    selected_icon = icon.strip() or DEFAULT_SERVICE_ICON
-    if selected_icon not in SERVICE_ICON_CHOICES:
-        selected_icon = DEFAULT_SERVICE_ICON
+    selected_icon = (icon.strip() or DEFAULT_SERVICE_ICON)[:32].strip() or DEFAULT_SERVICE_ICON
     duplicate = db.scalar(select(Service).where(Service.name == clean_name))
     if duplicate and duplicate.id != service_id:
         return redirect_to("/settings", error="Услуга с таким названием уже существует.", settings_panel="services", service_edit=service_id, services_edit=1)

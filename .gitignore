@@ -39,6 +39,8 @@ Thumbs.db
 .playwright-mcp/
 *.png
 !app/static/icons/*.png
+!app/static/service-icons/
+!app/static/service-icons/*.png
 *.docx
 *.xlsx
 *.pptx

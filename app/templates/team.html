@@ -100,8 +100,16 @@
             <div class="team-member-services">
                 {% if service_items %}
                     {% for item in service_items[:4] %}
+                    {% set item_icon_asset = service_icon_asset(item.icon) %}
                     <div class="team-service-pill">
-                        <span>{{ item.icon }} {{ item.name }}</span>
+                        <span>
+                            {% if item_icon_asset %}
+                            <img class="service-icon-inline" src="{{ item_icon_asset }}" alt="">
+                            {% else %}
+                            {{ item.icon }}
+                            {% endif %}
+                            {{ item.name }}
+                        </span>
                         <strong>{{ item.price }}</strong>
                     </div>
                     {% endfor %}
@@ -189,9 +197,16 @@
                         <div class="team-services-picker js-team-services-panel" id="team-services-panel" hidden>
                             {% for service in services %}
                             {% set selected_price = master_price_map.get(editing_user.id, {}).get(service.id) if editing_user and editing_user.role.value == 'master' else None %}
+                            {% set service_icon_asset_url = service_icon_asset(service.icon) %}
                             <label class="team-services-picker__option">
                                 <div class="team-services-picker__meta">
-                                    <span class="team-services-picker__icon">{{ service.icon or initials(service.name) }}</span>
+                                    <span class="team-services-picker__icon">
+                                        {% if service_icon_asset_url %}
+                                        <img class="service-icon-image" src="{{ service_icon_asset_url }}" alt="">
+                                        {% else %}
+                                        {{ service.icon or initials(service.name) }}
+                                        {% endif %}
+                                    </span>
                                     <span>{{ service.name }}</span>
                                 </div>
                                 <input
@@ -215,10 +230,17 @@
                     <div class="team-selected-services__grid">
                         {% for service in services %}
                         {% set selected_price = master_price_map.get(editing_user.id, {}).get(service.id) if editing_user and editing_user.role.value == 'master' else None %}
+                        {% set service_icon_asset_url = service_icon_asset(service.icon) %}
                         <article class="team-selected-service js-team-selected-service" data-service-id="{{ service.id }}" {% if selected_price is none %}hidden{% endif %}>
                             <div class="team-selected-service__head">
                                 <div class="team-selected-service__meta">
-                                    <span class="team-selected-service__icon">{{ service.icon or initials(service.name) }}</span>
+                                    <span class="team-selected-service__icon">
+                                        {% if service_icon_asset_url %}
+                                        <img class="service-icon-image" src="{{ service_icon_asset_url }}" alt="">
+                                        {% else %}
+                                        {{ service.icon or initials(service.name) }}
+                                        {% endif %}
+                                    </span>
                                     <strong>{{ service.name }}</strong>
                                 </div>
                             </div>

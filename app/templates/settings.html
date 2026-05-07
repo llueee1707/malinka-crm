@@ -162,7 +162,7 @@
                             data-service-mode="edit"
                             data-service-id="{{ service.id }}"
                             data-service-name="{{ service.name }}"
-                            data-service-icon="{{ service.icon or service_icon_choices[0] }}"
+                            data-service-icon="{{ service.icon or service_icon_choices[0].value }}"
                             data-service-title="Редактирование услуги"
                             data-service-submit="Сохранить"
                         >&#9998;</button>
@@ -171,7 +171,14 @@
                         </form>
                     </div>
                     {% endif %}
-                    <div class="service-catalog-card__icon">{{ service.icon or initials(service.name) }}</div>
+                    {% set icon_asset = service_icon_asset(service.icon) %}
+                    <div class="service-catalog-card__icon">
+                        {% if icon_asset %}
+                        <img class="service-icon-image" src="{{ icon_asset }}" alt="">
+                        {% else %}
+                        {{ service.icon or initials(service.name) }}
+                        {% endif %}
+                    </div>
                     <div class="service-catalog-card__name">{{ service.name }}</div>
                 </article>
                 {% endfor %}
@@ -202,7 +209,8 @@
     </div>
 
     {% if edit_services %}
-    {% set selected_icon = editing_service.icon if editing_service else service_icon_choices[0] %}
+    {% set selected_icon = editing_service.icon if editing_service else service_icon_choices[0].value %}
+    {% set selected_icon_asset = service_icon_asset(selected_icon) %}
     <div class="appointment-modal" id="service-editor-modal" {% if not editing_service %}hidden{% endif %}>
         <div class="appointment-modal__backdrop" data-modal-close="service-editor-modal"></div>
         <div class="appointment-modal__dialog service-editor-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="service-editor-title">
@@ -222,13 +230,20 @@
                 </div>
                 <div>
                     <span class="form-label d-block mb-2">Значок</span>
-                    <div class="service-icon-picker">
-                        {% for icon in service_icon_choices %}
-                        <label class="service-icon-choice {% if selected_icon == icon %}is-selected{% endif %}">
-                            <input class="service-icon-choice__input" type="radio" name="icon" value="{{ icon }}" {% if selected_icon == icon %}checked{% endif %}>
-                            <span class="service-icon-choice__symbol">{{ icon }}</span>
-                        </label>
-                        {% endfor %}
+                    <div class="service-icon-control js-service-icon-picker">
+                        <input class="js-service-icon-value" type="hidden" name="icon" value="{{ selected_icon }}">
+                        <div class="service-icon-current" aria-live="polite">
+                            <img class="service-icon-current__image js-service-icon-preview-image" src="{{ selected_icon_asset or '' }}" alt="" {% if not selected_icon_asset %}hidden{% endif %}>
+                            <span class="service-icon-current__symbol js-service-icon-preview-text" {% if selected_icon_asset %}hidden{% endif %}>{{ selected_icon }}</span>
+                            <span class="service-icon-current__label">Выбранный значок</span>
+                        </div>
+                        <div class="service-icon-picker">
+                            {% for icon in service_icon_choices %}
+                            <button class="service-icon-choice {% if selected_icon == icon.value %}is-selected{% endif %}" type="button" data-service-icon-option="{{ icon.value }}" data-service-icon-src="{{ icon.src }}" aria-label="Выбрать значок">
+                                <img class="service-icon-choice__image" src="{{ icon.src }}" alt="">
+                            </button>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
                 <div class="service-editor-modal__actions">

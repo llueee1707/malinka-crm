@@ -396,25 +396,54 @@ function initPageModals() {
 }
 
 function initServiceIconPicker() {
-    const choices = Array.from(document.querySelectorAll(".service-icon-choice"));
+    const pickers = Array.from(document.querySelectorAll(".js-service-icon-picker"));
 
-    if (choices.length === 0) {
+    if (pickers.length === 0) {
         return;
     }
 
-    const sync = () => {
-        choices.forEach((choice) => {
-            const input = choice.querySelector(".service-icon-choice__input");
-            choice.classList.toggle("is-selected", Boolean(input?.checked));
+    pickers.forEach((picker) => {
+        const form = picker.closest("form");
+        const hiddenInput = picker.querySelector(".js-service-icon-value");
+        const previewImage = picker.querySelector(".js-service-icon-preview-image");
+        const previewText = picker.querySelector(".js-service-icon-preview-text");
+        const quickChoices = Array.from(picker.querySelectorAll("[data-service-icon-option]"));
+
+        if (!form || !hiddenInput) {
+            return;
+        }
+
+        const setSelectedIcon = (value) => {
+            const fallback = quickChoices[0]?.dataset.serviceIconOption || "";
+            const selected = (value || "").trim() || fallback;
+            const choice = quickChoices.find((item) => item.dataset.serviceIconOption === selected);
+            const selectedSrc = choice?.dataset.serviceIconSrc || "";
+            hiddenInput.value = selected;
+
+            if (previewImage) {
+                previewImage.src = selectedSrc;
+                previewImage.hidden = !selectedSrc;
+            }
+            if (previewText) {
+                previewText.textContent = selectedSrc ? "" : selected;
+                previewText.hidden = Boolean(selectedSrc);
+            }
+
+            quickChoices.forEach((choice) => {
+                choice.classList.toggle("is-selected", choice.dataset.serviceIconOption === selected);
+            });
+        };
+
+        form.setServiceIcon = setSelectedIcon;
+
+        quickChoices.forEach((choice) => {
+            choice.addEventListener("click", () => {
+                setSelectedIcon(choice.dataset.serviceIconOption || "");
+            });
         });
-    };
 
-    choices.forEach((choice) => {
-        const input = choice.querySelector(".service-icon-choice__input");
-        input?.addEventListener("change", sync);
+        setSelectedIcon(hiddenInput.value);
     });
-
-    sync();
 }
 
 function initServiceEditorModal() {
@@ -430,26 +459,6 @@ function initServiceEditorModal() {
     const submitButton = modal.querySelector(".js-service-editor-submit");
     const serviceIdInput = form.querySelector('input[name="service_id"]');
     const serviceNameInput = form.querySelector('input[name="name"]');
-    const iconInputs = Array.from(form.querySelectorAll('input[name="icon"]'));
-
-    const syncIcons = () => {
-        iconInputs.forEach((input) => {
-            input.closest(".service-icon-choice")?.classList.toggle("is-selected", input.checked);
-        });
-    };
-
-    const selectIcon = (value) => {
-        let matched = false;
-        iconInputs.forEach((input, index) => {
-            const checked = input.value === value || (!matched && !value && index === 0);
-            input.checked = checked;
-            matched = matched || checked;
-        });
-        if (!matched && iconInputs[0]) {
-            iconInputs[0].checked = true;
-        }
-        syncIcons();
-    };
 
     const populateForm = (trigger) => {
         const mode = trigger.dataset.serviceMode || "create";
@@ -465,7 +474,7 @@ function initServiceEditorModal() {
         if (serviceNameInput) {
             serviceNameInput.value = mode === "edit" ? trigger.dataset.serviceName || "" : "";
         }
-        selectIcon(mode === "edit" ? trigger.dataset.serviceIcon || "" : "");
+        form.setServiceIcon?.(mode === "edit" ? trigger.dataset.serviceIcon || "" : "");
     };
 
     triggers.forEach((trigger) => {
@@ -474,8 +483,7 @@ function initServiceEditorModal() {
         });
     });
 
-    iconInputs.forEach((input) => input.addEventListener("change", syncIcons));
-    syncIcons();
+    form.setServiceIcon?.(form.querySelector(".js-service-icon-value")?.value || "");
 }
 
 function initTeamMemberEditorModal() {

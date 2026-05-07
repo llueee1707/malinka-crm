@@ -560,11 +560,19 @@
                         <label class="form-label" data-i18n="form.services">Услуги</label>
                         <div class="service-picker landing-services-picker" role="group" aria-label="Услуги">
                             {% for service in landing_services %}
+                            {% set service_icon_asset_url = service_icon_asset(service.icon) %}
                             <label class="service-choice {% if service.id in booking_form.service_ids %}is-selected{% endif %}">
                                 <input class="service-choice__input" type="checkbox"
                                        name="service_ids" value="{{ service.id }}"
                                        {% if service.id in booking_form.service_ids %}checked{% endif %}>
-                                <span class="service-choice__label">{{ service.icon or "✂" }} <span class="service-choice__name" data-service-name="{{ service.name }}">{{ service.name }}</span></span>
+                                <span class="service-choice__label">
+                                    {% if service_icon_asset_url %}
+                                    <img class="service-icon-inline" src="{{ service_icon_asset_url }}" alt="">
+                                    {% else %}
+                                    {{ service.icon or "✂" }}
+                                    {% endif %}
+                                    <span class="service-choice__name" data-service-name="{{ service.name }}">{{ service.name }}</span>
+                                </span>
                             </label>
                             {% endfor %}
                         </div>

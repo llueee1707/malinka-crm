@@ -174,11 +174,19 @@
 
                 <div class="report-legend">
                     {% for row in service_rows %}
+                    {% set row_icon_asset = service_icon_asset(row.icon) %}
                     <div class="report-legend__row">
                         <div class="report-legend__meta">
                             <span class="report-legend__dot" style="background: {{ row.color }};"></span>
                             <div>
-                                <div class="fw-semibold">{{ row.icon }} {{ row.name }}</div>
+                                <div class="fw-semibold">
+                                    {% if row_icon_asset %}
+                                    <img class="service-icon-inline" src="{{ row_icon_asset }}" alt="">
+                                    {% else %}
+                                    {{ row.icon }}
+                                    {% endif %}
+                                    {{ row.name }}
+                                </div>
                                 <div class="text-secondary small">{{ row.appointments }} услуг в чеках</div>
                             </div>
                         </div>
@@ -250,10 +258,18 @@
             {% if service_rows %}
             <div class="report-rank-list">
                 {% for row in service_rows %}
+                {% set row_icon_asset = service_icon_asset(row.icon) %}
                 <div class="report-rank-row">
                     <div class="report-rank-row__head">
                         <div>
-                            <div class="fw-semibold">{{ row.icon }} {{ row.name }}</div>
+                            <div class="fw-semibold">
+                                {% if row_icon_asset %}
+                                <img class="service-icon-inline" src="{{ row_icon_asset }}" alt="">
+                                {% else %}
+                                {{ row.icon }}
+                                {% endif %}
+                                {{ row.name }}
+                            </div>
                             <div class="text-secondary small">{{ row.appointments }} услуг в закрытых визитах</div>
                         </div>
                         <div class="text-end">

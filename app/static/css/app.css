@@ -271,6 +271,9 @@ body.is-standalone-app {
 }
 
 .service-choice__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
     width: 100%;
     padding: 14px 16px;
     font-weight: 700;
@@ -731,8 +734,44 @@ a.btn.btn-primary[href^="/appointments/new"] {
 
 .service-icon-picker {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 10px;
+    max-height: 188px;
+    overflow: auto;
+    padding-right: 2px;
+}
+
+.service-icon-control {
+    display: grid;
+    gap: 12px;
+}
+
+.service-icon-current {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+    min-height: 42px;
+    padding: 8px 12px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.service-icon-current__symbol {
+    font-size: 1.35rem;
+    line-height: 1;
+}
+
+.service-icon-current__image {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+}
+
+.service-icon-current__label {
+    color: var(--text-muted);
+    font-size: 0.84rem;
 }
 
 .service-icon-choice {
@@ -744,7 +783,9 @@ a.btn.btn-primary[href^="/appointments/new"] {
     border-radius: 18px;
     background: rgba(255, 255, 255, 0.045);
     border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text);
     cursor: pointer;
+    font: inherit;
     transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
 }
 
@@ -758,15 +799,36 @@ a.btn.btn-primary[href^="/appointments/new"] {
     border-color: rgba(184, 119, 255, 0.3);
 }
 
-.service-icon-choice__input {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-}
-
 .service-icon-choice__symbol {
     font-size: 1.45rem;
+}
+
+.visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+.service-icon-image,
+.service-icon-choice__image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.service-icon-inline {
+    width: 1.55em;
+    height: 1.55em;
+    object-fit: contain;
+    display: inline-block;
+    vertical-align: -0.35em;
 }
 
 .service-catalog-grid {
