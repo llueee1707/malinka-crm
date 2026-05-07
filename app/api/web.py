@@ -77,6 +77,7 @@ from app.services.uploads import save_receipt_photo
 
 router = APIRouter()
 templates = Jinja2Templates(directory=str(BASE_DIR / "app" / "templates"))
+STATIC_ASSET_VERSION = "20260507-1"
 templates.env.globals.update(
     role_label=role_label,
     status_label=status_label,
@@ -92,7 +93,7 @@ SERVICE_IMAGE_ICON_SET = set(SERVICE_IMAGE_ICON_VALUES)
 SERVICE_ICON_CHOICES = [
     {
         "value": value,
-        "src": f"/static/service-icons/{value}.png",
+        "src": f"/static/service-icons/{value}.png?v={STATIC_ASSET_VERSION}",
     }
     for value in SERVICE_IMAGE_ICON_VALUES
 ]
@@ -131,7 +132,7 @@ templates.env.globals.update(format_won=format_won)
 
 def service_icon_asset(value: str | None) -> str | None:
     if value in SERVICE_IMAGE_ICON_SET:
-        return f"/static/service-icons/{value}.png"
+        return f"/static/service-icons/{value}.png?v={STATIC_ASSET_VERSION}"
     return None
 
 

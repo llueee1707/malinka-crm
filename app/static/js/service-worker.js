@@ -1,11 +1,11 @@
-const CACHE_NAME = "salon-crm-v38";
+const CACHE_NAME = "salon-crm-v39";
 const OFFLINE_ASSETS = [
     "/",
     "/login",
-    "/manifest.webmanifest",
-    "/static/css/app.css?v=20260425-3",
-    "/static/css/mobile.css?v=20260425-6",
-    "/static/js/app.js?v=20260425-2",
+    "/manifest.webmanifest?v=20260507-1",
+    "/static/css/app.css?v=20260507-1",
+    "/static/css/mobile.css?v=20260507-1",
+    "/static/js/app.js?v=20260507-1",
     "/static/images/salon-hero.jpg",
     "/static/icons/apple-touch-icon.png",
     "/static/icons/icon-192.png",
