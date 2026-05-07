@@ -27,6 +27,7 @@ app/static/uploads/receipts/*
 *.log
 *.err.log
 *.out.log
+server.pid
 
 # OS / IDE
 .DS_Store

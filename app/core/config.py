@@ -44,7 +44,7 @@ class Settings(BaseSettings):
             "admin123",
             "master123",
         }
-        if value in weak_values or len(value) < 8:
+        if value in weak_values or len(value) < 6:
             raise ValueError("BOOTSTRAP_DIRECTOR_PASSWORD must be changed before first run.")
         return value
 

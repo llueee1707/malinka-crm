@@ -1179,6 +1179,9 @@ def validate_public_booking_payload(
 
     unique_service_ids = list(dict.fromkeys(service_ids))
     if not unique_service_ids:
+        has_public_services = db.scalar(select(func.count(Service.id))) or 0
+        if not has_public_services:
+            return preferred_date_obj, preferred_time_obj, [], None, None
         return None, None, [], None, "Выберите хотя бы одну услугу."
 
     services = list(
@@ -1628,6 +1631,9 @@ def booking_request_decline(
 
 @router.get("/login", include_in_schema=False)
 def login_page(request: Request, db: Session = Depends(get_db)) -> object:
+    if (request.url.hostname or "").lower() in {"sheartly.com", "www.sheartly.com"}:
+        return RedirectResponse(url="https://crm.sheartly.com/login", status_code=status.HTTP_302_FOUND)
+
     user = get_current_user(request, db)
     if user:
         return redirect_to("/appointments")
