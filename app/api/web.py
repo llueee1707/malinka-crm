@@ -2594,6 +2594,63 @@ async def team_save(
             )
 
     db.add(member)
+    db.flush()
+
+    form = await request.form()
+
+    existing_prices = {
+        price.service_id: price
+        for price in db.scalars(
+            select(MasterServicePrice).where(MasterServicePrice.master_id == member.id)
+        )
+    }
+
+    if role == UserRole.MASTER:
+        raw_service_ids = form.getlist("service_ids")
+        selected_service_ids: set[int] = set()
+        for raw in raw_service_ids:
+            try:
+                selected_service_ids.add(int(raw))
+            except (TypeError, ValueError):
+                continue
+
+        if selected_service_ids:
+            valid_ids = set(
+                db.scalars(
+                    select(Service.id).where(Service.id.in_(selected_service_ids))
+                )
+            )
+            selected_service_ids &= valid_ids
+
+        for service_id in selected_service_ids:
+            raw_price = str(form.get(f"price_{service_id}", "")).strip()
+            if raw_price and not raw_price.isdigit():
+                return redirect_to(
+                    "/team",
+                    error="Цена услуги должна быть целым числом.",
+                    team_edit=1,
+                    member_edit=member.id,
+                )
+            price_value = int(raw_price) if raw_price else 0
+            existing = existing_prices.get(service_id)
+            if existing:
+                existing.price = price_value
+            else:
+                db.add(
+                    MasterServicePrice(
+                        master_id=member.id,
+                        service_id=service_id,
+                        price=price_value,
+                    )
+                )
+
+        for service_id, existing in existing_prices.items():
+            if service_id not in selected_service_ids:
+                db.delete(existing)
+    else:
+        for existing in existing_prices.values():
+            db.delete(existing)
+
     db.commit()
     return redirect_to("/team", notice="Пользователь сохранен.", team_edit=1)
 
