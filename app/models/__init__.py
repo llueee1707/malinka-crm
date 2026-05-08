@@ -1,4 +1,5 @@
 from app.models.entities import Appointment
+from app.models.entities import AppointmentPrepaymentPhoto
 from app.models.entities import AppointmentReceiptPhoto
 from app.models.entities import AppointmentService
 from app.models.entities import Client
@@ -9,6 +10,7 @@ from app.models.entities import User
 
 __all__ = [
     "Appointment",
+    "AppointmentPrepaymentPhoto",
     "AppointmentReceiptPhoto",
     "AppointmentService",
     "Client",

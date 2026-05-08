@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.security import get_password_hash
 from app.models.entities import Appointment
+from app.models.entities import AppointmentPrepaymentPhoto
 from app.models.entities import AppointmentReceiptPhoto
 from app.models.entities import AppointmentStatus
 from app.models.entities import Client
@@ -79,6 +80,9 @@ def migrate_legacy_utc_timestamps(db: Session) -> None:
 
     for receipt in db.scalars(select(AppointmentReceiptPhoto)).all():
         receipt.created_at = _convert_legacy_utc_naive_to_local(receipt.created_at)
+
+    for prepayment in db.scalars(select(AppointmentPrepaymentPhoto)).all():
+        prepayment.created_at = _convert_legacy_utc_naive_to_local(prepayment.created_at)
 
     db.execute(text(f"PRAGMA user_version = {LOCAL_TIME_MIGRATION_VERSION}"))
     db.commit()

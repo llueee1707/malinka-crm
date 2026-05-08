@@ -152,6 +152,11 @@ class Appointment(Base):
         cascade="all, delete-orphan",
         order_by="AppointmentReceiptPhoto.created_at.asc()",
     )
+    prepayment_photos: Mapped[list["AppointmentPrepaymentPhoto"]] = relationship(
+        back_populates="appointment",
+        cascade="all, delete-orphan",
+        order_by="AppointmentPrepaymentPhoto.created_at.asc()",
+    )
 
 
 class AppointmentReceiptPhoto(Base):
@@ -163,6 +168,17 @@ class AppointmentReceiptPhoto(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
 
     appointment: Mapped[Appointment] = relationship(back_populates="receipt_photos")
+
+
+class AppointmentPrepaymentPhoto(Base):
+    __tablename__ = "appointment_prepayment_photos"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    appointment_id: Mapped[int] = mapped_column(ForeignKey("appointments.id"), index=True)
+    file_path: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
+
+    appointment: Mapped[Appointment] = relationship(back_populates="prepayment_photos")
 
 
 class Setting(Base):

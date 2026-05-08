@@ -214,6 +214,19 @@
             <div class="booking-note">{{ appointment.comment }}</div>
             {% endif %}
 
+            {% if appointment.prepayment_photos %}
+            <div>
+                <p class="small-label mb-2">Фото предоплаты</p>
+                <div class="receipt-gallery">
+                    {% for photo in appointment.prepayment_photos %}
+                    <a class="receipt-thumb" href="{{ photo.file_path }}" data-lightbox-src="{{ photo.file_path }}" data-lightbox-alt="Фото предоплаты по записи {{ appointment.id }}">
+                        <img src="{{ photo.file_path }}" alt="Фото предоплаты по записи {{ appointment.id }}">
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
             {% if appointment.completion_comment %}
             <div class="booking-note booking-note--success">{{ appointment.completion_comment }}</div>
             {% endif %}

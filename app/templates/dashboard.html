@@ -104,6 +104,18 @@
                     {% if appointment.comment %}
                     <div class="note-box mt-3">{{ appointment.comment }}</div>
                     {% endif %}
+                    {% if appointment.prepayment_photos %}
+                    <div class="mt-3">
+                        <p class="small-label mb-2">Фото предоплаты</p>
+                        <div class="receipt-gallery">
+                            {% for photo in appointment.prepayment_photos %}
+                            <a class="receipt-thumb" href="{{ photo.file_path }}" data-lightbox-src="{{ photo.file_path }}" data-lightbox-alt="Фото предоплаты по записи {{ appointment.id }}">
+                                <img src="{{ photo.file_path }}" alt="Фото предоплаты по записи {{ appointment.id }}">
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
                     {% if appointment.receipt_photos %}
                     <div class="receipt-gallery mt-3">
                         {% for photo in appointment.receipt_photos %}

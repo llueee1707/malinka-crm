@@ -207,6 +207,18 @@
                     #{{ booking_request.appointment.id }} — {{ booking_request.appointment.starts_at.strftime("%d.%m.%Y в %H:%M") }}{% if booking_request.appointment.master %}, {{ booking_request.appointment.master.full_name }}{% endif %}
                 </p>
             </div>
+            {% if booking_request.appointment.prepayment_photos %}
+            <div class="col-12">
+                <p class="small-label mb-2">Фото предоплаты</p>
+                <div class="receipt-gallery">
+                    {% for photo in booking_request.appointment.prepayment_photos %}
+                    <a class="receipt-thumb" href="{{ photo.file_path }}" data-lightbox-src="{{ photo.file_path }}" data-lightbox-alt="Фото предоплаты по записи {{ booking_request.appointment.id }}">
+                        <img src="{{ photo.file_path }}" alt="Фото предоплаты по записи {{ booking_request.appointment.id }}">
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
             {% endif %}
         </div>
     </div>

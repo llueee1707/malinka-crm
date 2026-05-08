@@ -34,6 +34,7 @@ from app.core.security import get_password_hash
 from app.core.security import verify_password
 from app.db.session import get_db
 from app.models.entities import Appointment
+from app.models.entities import AppointmentPrepaymentPhoto
 from app.models.entities import AppointmentReceiptPhoto
 from app.models.entities import AppointmentStatus
 from app.models.entities import BookingRequest
@@ -423,6 +424,7 @@ def appointment_base_query() -> Select:
             joinedload(Appointment.master),
             selectinload(Appointment.services),
             selectinload(Appointment.receipt_photos),
+            selectinload(Appointment.prepayment_photos),
         )
         .order_by(Appointment.starts_at.asc())
     )
@@ -1311,6 +1313,7 @@ def _booking_request_base_query() -> Select:
             joinedload(BookingRequest.preferred_master),
             joinedload(BookingRequest.appointment).joinedload(Appointment.master),
             joinedload(BookingRequest.appointment).joinedload(Appointment.client),
+            joinedload(BookingRequest.appointment).selectinload(Appointment.prepayment_photos),
             joinedload(BookingRequest.resolved_by),
         )
     )
@@ -1626,8 +1629,8 @@ def booking_request_approve(
     )
     appointment.services = services
     for saved_prepayment_path in saved_prepayment_paths:
-        appointment.receipt_photos.append(
-            AppointmentReceiptPhoto(file_path=saved_prepayment_path)
+        appointment.prepayment_photos.append(
+            AppointmentPrepaymentPhoto(file_path=saved_prepayment_path)
         )
     db.add(appointment)
     db.flush()
@@ -2153,6 +2156,7 @@ def appointment_status_update(
         .options(
             joinedload(Appointment.master),
             selectinload(Appointment.receipt_photos),
+            selectinload(Appointment.prepayment_photos),
         )
         .where(Appointment.id == appointment_id)
     )

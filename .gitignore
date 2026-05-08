@@ -19,8 +19,10 @@ salon.db-journal
 
 # Uploaded user content (do not ship test data)
 app/static/uploads/avatars/*
+app/static/uploads/prepayments/*
 app/static/uploads/receipts/*
 !app/static/uploads/avatars/.gitkeep
+!app/static/uploads/prepayments/.gitkeep
 !app/static/uploads/receipts/.gitkeep
 
 # Logs
