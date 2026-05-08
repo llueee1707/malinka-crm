@@ -1411,6 +1411,15 @@ def build_booking_request_detail_context(
         booking_request.full_name,
     )
 
+    master_ids = [master.id for master in visible_masters]
+    master_services_map: dict[int, list[int]] = {master_id: [] for master_id in master_ids}
+    if master_ids:
+        price_rows = db.scalars(
+            select(MasterServicePrice).where(MasterServicePrice.master_id.in_(master_ids))
+        )
+        for price in price_rows:
+            master_services_map.setdefault(price.master_id, []).append(price.service_id)
+
     default_master_id = (
         booking_request.preferred_master_id
         if booking_request.preferred_master_id
@@ -1425,6 +1434,7 @@ def build_booking_request_detail_context(
         "visible_masters": visible_masters,
         "all_services": all_services,
         "selected_service_ids": selected_service_ids,
+        "master_services_map": master_services_map,
         "client_candidates": client_candidates,
         "default_master_id": default_master_id,
         "default_client_mode": default_client_mode,

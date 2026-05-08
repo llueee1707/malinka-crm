@@ -89,7 +89,8 @@
 
         <div>
             <label class="form-label">Мастер</label>
-            <select class="form-select" name="master_id" required>
+            <select class="form-select js-booking-master-select" name="master_id" required
+                    data-master-services="{{ master_services_map | tojson }}">
                 <option value="">Выберите мастера</option>
                 {% for master in visible_masters %}
                 <option value="{{ master.id }}" {% if form_state.master_id == master.id %}selected{% endif %}>{{ master.full_name }}</option>
@@ -99,14 +100,15 @@
 
         <div>
             <label class="form-label">Услуги</label>
-            <div class="service-picker js-services-select" role="group" aria-label="Услуги">
+            <div class="service-picker js-services-select js-booking-services" role="group" aria-label="Услуги">
                 {% for service in all_services %}
-                <label class="service-choice {% if service.id in form_state.service_ids %}is-selected{% endif %}">
+                <label class="service-choice js-booking-service-choice {% if service.id in form_state.service_ids %}is-selected{% endif %}" data-service-id="{{ service.id }}">
                     <input class="service-choice__input js-service-checkbox" type="checkbox" name="service_ids" value="{{ service.id }}" {% if service.id in form_state.service_ids %}checked{% endif %}>
                     <span class="service-choice__label">{{ service.name }}</span>
                 </label>
                 {% endfor %}
             </div>
+            <div class="form-text text-secondary js-booking-services-empty" hidden>У выбранного мастера нет ни одной услуги.</div>
         </div>
 
         <div>
@@ -259,6 +261,59 @@
                 }
             });
         });
+
+        var masterSelect = document.querySelector('.js-booking-master-select');
+        var serviceChoices = Array.prototype.slice.call(
+            document.querySelectorAll('.js-booking-service-choice')
+        );
+        var emptyHint = document.querySelector('.js-booking-services-empty');
+        if (masterSelect && serviceChoices.length) {
+            var rawMap = masterSelect.getAttribute('data-master-services') || '{}';
+            var masterServicesMap = {};
+            try {
+                masterServicesMap = JSON.parse(rawMap) || {};
+            } catch (err) {
+                masterServicesMap = {};
+            }
+
+            function filterServicesByMaster() {
+                var masterId = masterSelect.value;
+                var allowed = null;
+                if (masterId && masterServicesMap.hasOwnProperty(masterId)) {
+                    allowed = masterServicesMap[masterId] || [];
+                } else if (masterId && masterServicesMap.hasOwnProperty(String(masterId))) {
+                    allowed = masterServicesMap[String(masterId)] || [];
+                }
+                var visibleCount = 0;
+                serviceChoices.forEach(function (choice) {
+                    var serviceId = choice.getAttribute('data-service-id');
+                    var input = choice.querySelector('.js-service-checkbox');
+                    var isAllowed = true;
+                    if (masterId && allowed !== null) {
+                        isAllowed = allowed.indexOf(Number(serviceId)) !== -1
+                            || allowed.indexOf(serviceId) !== -1;
+                    }
+                    if (isAllowed) {
+                        choice.hidden = false;
+                        choice.style.display = '';
+                        visibleCount += 1;
+                    } else {
+                        choice.hidden = true;
+                        choice.style.display = 'none';
+                        if (input && input.checked) {
+                            input.checked = false;
+                            choice.classList.remove('is-selected');
+                        }
+                    }
+                });
+                if (emptyHint) {
+                    emptyHint.hidden = !(masterId && visibleCount === 0);
+                }
+            }
+
+            masterSelect.addEventListener('change', filterServicesByMaster);
+            filterServicesByMaster();
+        }
     })();
 </script>
 {% endblock %}
