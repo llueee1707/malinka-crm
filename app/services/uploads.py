@@ -44,3 +44,21 @@ def save_receipt_photo(upload: UploadFile | None) -> str | None:
     payload = upload.file.read()
     target_path.write_bytes(payload)
     return f"/static/uploads/receipts/{filename}"
+
+
+def save_prepayment_photo(upload: UploadFile | None) -> str | None:
+    if not upload or not upload.filename:
+        return None
+
+    suffix = Path(upload.filename).suffix.lower()
+    if suffix not in ALLOWED_IMAGE_SUFFIXES:
+        raise ValueError(ALLOWED_IMAGE_MESSAGE)
+
+    target_dir = BASE_DIR / "app" / "static" / "uploads" / "prepayments"
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    filename = f"{uuid4().hex}{suffix}"
+    target_path = target_dir / filename
+    payload = upload.file.read()
+    target_path.write_bytes(payload)
+    return f"/static/uploads/prepayments/{filename}"

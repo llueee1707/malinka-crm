@@ -72,6 +72,7 @@ from app.services.salon import status_label
 from app.services.salon import sync_master_statuses
 from app.services.salon import today_range
 from app.services.uploads import save_avatar
+from app.services.uploads import save_prepayment_photo
 from app.services.uploads import save_receipt_photo
 
 
@@ -1495,6 +1496,7 @@ def booking_request_approve(
     client_id_raw: str | None = Form(default=None, alias="client_id"),
     service_ids: list[int] = Form(default=[]),
     comment: str | None = Form(default=None),
+    prepayment_photos: list[UploadFile] = File(default=[]),
     db: Session = Depends(get_db),
 ) -> object:
     user = ensure_authenticated(request, db)
@@ -1558,6 +1560,33 @@ def booking_request_approve(
             db=db,
         )
 
+    saved_prepayment_paths: list[str] = []
+    try:
+        for upload in prepayment_photos or []:
+            saved_path = save_prepayment_photo(upload)
+            if saved_path:
+                saved_prepayment_paths.append(saved_path)
+    except ValueError as exc:
+        context = build_booking_request_detail_context(db, booking_request)
+        context["form_error"] = str(exc)
+        context["form_state"] = {
+            "date": day_value,
+            "time": time_value,
+            "master_id": master_id,
+            "client_mode": normalized_mode,
+            "client_id": client_id,
+            "service_ids": list(dict.fromkeys(service_ids)),
+            "comment": comment or "",
+        }
+        return page(
+            request,
+            "booking_request_detail.html",
+            user,
+            context,
+            status_code=status.HTTP_400_BAD_REQUEST,
+            db=db,
+        )
+
     resolved_client: Client | None = None
     if normalized_mode == "existing" and client_id:
         resolved_client = db.get(Client, client_id)
@@ -1596,6 +1625,10 @@ def booking_request_approve(
         comment=(comment or "").strip() or None,
     )
     appointment.services = services
+    for saved_prepayment_path in saved_prepayment_paths:
+        appointment.receipt_photos.append(
+            AppointmentReceiptPhoto(file_path=saved_prepayment_path)
+        )
     db.add(appointment)
     db.flush()
 

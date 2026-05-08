@@ -70,7 +70,7 @@
     </div>
 
     {% if booking_request.status.value == 'new' %}
-    <form method="post" action="/booking-requests/{{ booking_request.id }}/approve" class="panel-card d-grid gap-3">
+    <form method="post" action="/booking-requests/{{ booking_request.id }}/approve" class="panel-card d-grid gap-3" enctype="multipart/form-data">
         <h2 class="h5 mb-0">Подтверждение заявки</h2>
         <p class="text-secondary mb-0">
             Проверьте данные и подтвердите. Мы создадим запись в CRM со статусом «ожидает».
@@ -157,6 +157,13 @@
         <div>
             <label class="form-label">Комментарий к записи</label>
             <textarea class="form-control" name="comment" rows="3" placeholder="Необязательно">{{ form_state.comment }}</textarea>
+        </div>
+
+        <div>
+            <label class="form-label" for="booking-prepayment-photos">Фото предоплаты</label>
+            <input id="booking-prepayment-photos" class="form-control" type="file"
+                   name="prepayment_photos" accept="image/*,.heic,.heif" multiple>
+            <div class="form-text text-secondary">Необязательно: можно прикрепить одно или несколько фото подтверждения предоплаты. Они сохранятся к записи и не заменяют фото или комментарий, которые потребуются при её закрытии.</div>
         </div>
 
         <div class="booking-actions booking-actions--stack">
